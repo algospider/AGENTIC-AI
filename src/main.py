@@ -1,9 +1,9 @@
 """
-Portfolio Health Advisor — Starter Entry Point
+Portfolio Health Advisor: Starter Entry Point
 
 This file wires the two-agent pipeline together. You are free to
 restructure this, add a web UI (Streamlit/Gradio), or build your own
-CLI flow — this is just here to remove blank-page friction.
+CLI flow this is just here to remove blank-page friction.
 
 Run with:
     python src/main.py --portfolio ../sample_data/sample_portfolio.csv

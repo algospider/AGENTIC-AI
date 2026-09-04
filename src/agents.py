@@ -1,5 +1,5 @@
 """
-Agents — Portfolio Health Advisor
+Agents: Portfolio Health Advisor
 
 Two simple, sequential agents:
 
@@ -7,8 +7,7 @@ Two simple, sequential agents:
 
 Neither agent needs to be built with a heavyweight framework. A
 straightforward Python function that (optionally) calls an LLM API is
-completely sufficient — that's the intended scope for a beginner
-hackathon. Feel free to use LangChain/CrewAI/etc. if your team prefers,
+completely sufficient. Feel free to use LangChain/CrewAI/etc. if your team prefers,
 but it is not required or rewarded extra for its own sake.
 """
 
@@ -20,7 +19,7 @@ from tools import calculate_returns, calculate_allocation
 def analyst_agent(portfolio) -> dict[str, Any]:
     """
     Agent 1: Reads portfolio data, calls both tools, and returns
-    structured findings. This agent should NOT produce advice — just
+    structured findings. This agent should NOT produce advice just
     facts, computed via the tools.
 
     TODO: implement this. At minimum:
@@ -41,10 +40,11 @@ def analyst_agent(portfolio) -> dict[str, Any]:
     returns = calculate_returns(portfolio)
     allocation = calculate_allocation(portfolio)
 
-    raise NotImplementedError(
-        "Combine `returns` and `allocation` into a findings dict and "
-        "return it"
-    )
+    return {
+        'analysis': "",
+        'returns': returns,
+        'allocation': allocation
+    }
 
 
 def advisor_agent(findings: dict[str, Any]) -> str:
@@ -56,7 +56,7 @@ def advisor_agent(findings: dict[str, Any]) -> str:
     that includes the findings, and ask it to reason about the
     portfolio's health and give simple advice.
 
-    No new tools are needed here — just reasoning over `findings`.
+    No new tools are needed here just reasoning over `findings`.
 
     TODO: implement this.
 
@@ -66,4 +66,4 @@ def advisor_agent(findings: dict[str, Any]) -> str:
     Returns:
         A plain-English summary string with actionable suggestions.
     """
-    raise NotImplementedError("Implement advisor reasoning here")
+    return ""

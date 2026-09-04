@@ -1,25 +1,19 @@
-# --- Data handling ---
 pandas==2.2.2
 
-# --- LLM API (pick whichever your team uses; all have free tiers) ---
 python-dotenv==1.0.1
+
+# pick whichever your team uses, all have free tiers
 # openai==1.51.0
 # google-generativeai==0.8.3
 # groq==0.11.0
 
-# --- Optional: agent framework, if you want one (not required) ---
+# Optional: agent framework, if you want one (not required)
 # langchain==0.3.0
 # crewai==0.70.1
 
-# --- Optional: for building a quick UI ---
 streamlit==1.38.0
 # gradio==4.44.0
 
-# --- Notebook support (for quickstart.ipynb) ---
-jupyter==1.0.0
-ipykernel==6.29.5
-
 # NOTE:
 # You are free to add/remove packages as your solution needs. This file
-# is a starting point, not a restriction. A plain Python + LLM-API-call
-# approach (no framework) is perfectly fine and often faster to build.
+# is a starting point, not a restriction.

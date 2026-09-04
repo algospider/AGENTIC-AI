@@ -1,0 +1,11 @@
+ticker,company_name,sector,quantity,buy_price,current_price
+TCHX,TechCorp Innovations,Technology,25,142.50,198.30
+CLDW,CloudWave Systems,Technology,15,310.00,275.60
+FINB,FinBank Holdings,Financials,40,55.20,61.75
+HLTC,HealthCore Pharma,Healthcare,20,88.00,94.10
+ENRG,EnerGrid Renewables,Energy,30,45.75,52.90
+CNSG,ConsumerGoods Co,Consumer Staples,50,32.10,30.45
+RLST,RealState Properties,Real Estate,18,120.00,115.25
+AUTM,AutoMotive Next,Consumer Discretionary,22,76.40,89.60
+SEMI,SemiTech Devices,Technology,12,410.00,455.75
+UTIL,UtilityGrid Power,Utilities,35,28.90,29.80

@@ -9,30 +9,33 @@ const API_KEY = process.env.OPENAI_API_KEY || "";
 const MODEL_ID = process.env.MODEL_ID || "nemotron-3-ultra-free";
 const CACHE_DIR = join(process.cwd(), "..", "outputs", ".advice_cache");
 
-async function zenChat(system: string, prompt: string, timeoutMs = 45000): Promise<string | null> {
+// Same budget as Q&A: fast single attempt, then the rule engine.
+// A killed serverless function is worse than a quick offline answer.
+export const maxDuration = 60;
+const ADVICE_TIMEOUT_MS = 8000;
+
+async function zenChat(system: string, prompt: string, timeoutMs = ADVICE_TIMEOUT_MS): Promise<string | null> {
   if (!API_KEY) return null;
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    try {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-      const res = await fetch(`${BASE_URL}/chat/completions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${API_KEY}` },
-        body: JSON.stringify({
-          model: MODEL_ID,
-          messages: [{ role: "system", content: system }, { role: "user", content: prompt }],
-          temperature: 0.4, max_tokens: 600,
-        }),
-        signal: ctrl.signal,
-      });
-      clearTimeout(timer);
-      if (!res.ok) continue;
-      const data = await res.json();
-      const content: string | undefined =
-        data?.choices?.[0]?.message?.content || data?.choices?.[0]?.message?.reasoning;
-      if (content?.trim()) return content.trim();
-    } catch { /* retry once */ }
-  }
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+    const res = await fetch(`${BASE_URL}/chat/completions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${API_KEY}` },
+      body: JSON.stringify({
+        model: MODEL_ID,
+        messages: [{ role: "system", content: system }, { role: "user", content: prompt }],
+        temperature: 0.4, max_tokens: 600,
+      }),
+      signal: ctrl.signal,
+    });
+    clearTimeout(timer);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const content: string | undefined =
+      data?.choices?.[0]?.message?.content || data?.choices?.[0]?.message?.reasoning;
+    if (content?.trim()) return content.trim();
+  } catch { /* fall through to rule engine */ }
   return null;
 }
 

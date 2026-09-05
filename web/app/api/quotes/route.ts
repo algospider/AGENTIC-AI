@@ -18,7 +18,7 @@ async function fetchBatch(symbols: string[]): Promise<Record<string, { price: nu
   const out: Record<string, { price: number; time: number; currency: string }> = {};
   const url = `https://query1.finance.yahoo.com/v7/finance/spark?symbols=${symbols.join(",")}&range=1d&interval=1d`;
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 20000);
+  const timer = setTimeout(() => ctrl.abort(), 9000);
   try {
     const res = await fetch(url, { headers: { "User-Agent": UA }, signal: ctrl.signal });
     if (!res.ok) return out;

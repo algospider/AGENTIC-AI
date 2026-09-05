@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { qaFallback, type Findings, type Risks } from "@/lib/portfolio";
 
+// Keep well under serverless function limits (Netlify free ≈10s):
+// one quick LLM attempt, then the instant offline answer.
+export const maxDuration = 60;
+
+const QA_TIMEOUT_MS = 8000;
+
 const BASE_URL = (process.env.OPENAI_BASE_URL || "https://opencode.ai/zen/v1").replace(/\/$/, "");
 const API_KEY = process.env.OPENAI_API_KEY || "";
 const MODEL_ID = process.env.MODEL_ID || "nemotron-3-ultra-free";
@@ -30,7 +36,7 @@ export async function POST(req: NextRequest) {
       "Keep it under 100 words, plain English.";
     try {
       const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 45000);
+      const timer = setTimeout(() => ctrl.abort(), QA_TIMEOUT_MS);
       const res = await fetch(`${BASE_URL}/chat/completions`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${API_KEY}` },

@@ -66,6 +66,15 @@ Surprise us.
 
 ## Setup
 
+Easiest (one command, works with or without an API key):
+
+```bash
+./run.sh            # interactive menu + dashboard (uses the sample portfolio)
+./run.sh --auto     # one-shot: prints everything + saves a report to outputs/
+```
+
+Manual setup:
+
 ```bash
 git clone <your-team-repo-url>
 cd p2
@@ -77,6 +86,16 @@ pip install -r requirements.txt
 
 cp .env.example .env
 # then edit .env and add your free-tier key
+```
+
+Then run:
+
+```bash
+python3 src/main.py                       # full-screen TUI, mouse + keyboard (default)
+python3 src/main.py --menu                # classic scrolling menu instead
+python3 src/main.py --portfolio my.csv    # your own CSV (same columns)
+python3 src/main.py --auto                # no menu: dashboard + report file
+python3 src/main.py --non-interactive     # plain text output for scripts
 ```
 
 You do **not** need a paid API key. Free tiers (Groq, Gemini, OpenAI trial

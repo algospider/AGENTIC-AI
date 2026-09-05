@@ -1,19 +1,18 @@
-pandas==2.2.2
+pandas>=2.2.2
 
-python-dotenv==1.0.1
+python-dotenv>=1.0.1
 
-# pick whichever your team uses, all have free tiers
-# openai==1.51.0
-# google-generativeai==0.8.3
-# groq==0.11.0
+# LLM via OpenCode Zen (OpenAI-compatible) + Rich TUI + full-screen Textual TUI
+openai>=1.51.0
+rich>=13.9.2
+textual>=8.0
 
 # Optional: agent framework, if you want one (not required)
 # langchain==0.3.0
 # crewai==0.70.1
 
-streamlit==1.38.0
-# gradio==4.44.0
-
 # NOTE:
+# UI choice is a Rich terminal UI (src/tui.py), so streamlit/gradio
+# are not needed. You are free to add them back if you want a web UI.
 # You are free to add/remove packages as your solution needs. This file
 # is a starting point, not a restriction.

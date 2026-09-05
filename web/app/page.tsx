@@ -2,12 +2,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AllocationPie, PnlBars } from "@/components/charts";
 import { ChatView, HoldingsTable, LabView, PlanView, ProjectionView, AuthModal, ExtractPreview, type PreviewData } from "@/components/views";
-import { BookmarkIcon, LogoutIcon, UserIcon } from "@/components/icons";
+import { BookmarkIcon, LogoutIcon, UserIcon, PlusIcon, FlaskIcon, WalletIcon, TargetIcon, ChatIcon, DatabaseIcon, TrendUpIcon, UploadIcon, DownloadIcon, LogoMark, RefreshIcon, ArrowRightIcon, TrashIcon } from "@/components/icons";
 import {
   Badge, Card, HealthBar, LiveBadge, Skeleton, Stat, ThemeToggle, Timeline, Toast, ToastStack,
   btnGhost, btnPrimary, inputCls, money, signed, type Stage,
 } from "@/components/ui";
-import { DownloadIcon, LogoMark, RefreshIcon, ArrowRightIcon, UploadIcon, PlusIcon } from "@/components/icons";
 import { buildMarkdown, download, recordsToCSV } from "@/lib/report";
 import { mergeRows } from "@/lib/extract";
 import { orchestrate } from "@/lib/agents";
@@ -16,6 +15,7 @@ import {
 } from "@/lib/firebase";
 import {
   deleteReport, listReports, saveReport, type SavedReport,
+  deletePortfolio, listPortfolios, savePortfolio, type SavedPortfolio,
 } from "@/lib/library";
 import {
   analystBundle, compareBundles, parseCSV,
@@ -31,8 +31,15 @@ const DATASETS = [
   "portfolio_500_diversified_42.csv",
 ];
 
-const TABS = ["Dashboard", "Holdings", "Rebalance", "Projection", "Lab", "Q&A", "Datasets", "Library"] as const;
-type Tab = (typeof TABS)[number];
+const TABS = [
+  { id: "Overview", icon: TrendUpIcon },
+  { id: "Holdings", icon: WalletIcon },
+  { id: "Plan", icon: TargetIcon },
+  { id: "Lab", icon: FlaskIcon },
+  { id: "Ask", icon: ChatIcon },
+  { id: "My Data", icon: DatabaseIcon },
+] as const;
+type Tab = (typeof TABS)[number]["id"];
 interface ChatMsg { role: "user" | "assistant"; content: string }
 type Rec = Record<string, string>;
 
@@ -50,7 +57,7 @@ export default function Home() {
   const [adviceLoading, setAdviceLoading] = useState(false);
   const [live, setLive] = useState<{ updated: number; at: string } | null>(null);
   const [liveLoading, setLiveLoading] = useState(false);
-  const [tab, setTab] = useState<Tab>("Dashboard");
+  const [tab, setTab] = useState<Tab>("Overview");
   const [chat, setChat] = useState<ChatMsg[]>([]);
   const [thinking, setThinking] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -60,6 +67,9 @@ export default function Home() {
   const [fbUser, setFbUser] = useState<{ email: string; uid: string } | null>(null);
   const [showAuth, setShowAuth] = useState(false);
   const [library, setLibrary] = useState<SavedReport[]>([]);
+  const [myPortfolios, setMyPortfolios] = useState<SavedPortfolio[]>([]);
+  const [newMenu, setNewMenu] = useState(false);
+  const [exportMenu, setExportMenu] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const toast = useCallback((text: string, tone: Toast["tone"] = "cyan") => {
@@ -137,9 +147,11 @@ export default function Home() {
       if (u?.uid) {
         setFbUser({ email: u.email ?? "Account", uid: u.uid });
         setLibrary(listReports(u.uid));
+        setMyPortfolios(listPortfolios(u.uid));
       } else {
         setFbUser(null);
         setLibrary([]);
+        setMyPortfolios([]);
       }
     });
     return unsub;
@@ -173,7 +185,7 @@ export default function Home() {
     setTimeline(o.timeline);
     setAdvice(item.advice); setAdviceMeta("from your library");
     setFileName(item.name); setChat([]); setLive(null);
-    setTab("Dashboard");
+    setTab("Overview");
     toast(`Opened “${item.name}” — no AI call needed.`, "green");
   };
 
@@ -286,8 +298,35 @@ export default function Home() {
       quantity: "10", buy_price: "100", current_price: "110",
     }];
     await applyDataset("my-portfolio.csv", recs, recordsToCSV(recs), null);
+    if (fbUser) {
+      savePortfolio(fbUser.uid, "my-portfolio.csv", recs);
+      setMyPortfolios(listPortfolios(fbUser.uid));
+    }
     setTab("Holdings");
     toast("Blank portfolio started — edit the example, add your holdings.", "green");
+  };
+
+  const persistCurrent = () => {
+    if (!fbUser || !records) return;
+    savePortfolio(fbUser.uid, fileName, records);
+    setMyPortfolios(listPortfolios(fbUser.uid));
+    toast(`Saved “${fileName}” to My Data.`, "green");
+  };
+
+  const openPortfolio = async (id: string) => {
+    if (!fbUser) return;
+    const item = listPortfolios(fbUser.uid).find((x) => x.id === id);
+    if (!item) { toast("Could not open that portfolio.", "red"); return; }
+    await applyDataset(item.name, item.records, recordsToCSV(item.records), null);
+    setTab("Overview");
+  };
+
+  const removePortfolio = (id: string) => {
+    if (!fbUser) return;
+    if (deletePortfolio(fbUser.uid, id)) {
+      setMyPortfolios(listPortfolios(fbUser.uid));
+      toast("Portfolio deleted.", "cyan");
+    }
   };
 
   const [preview, setPreview] = useState<PreviewData | null>(null);
@@ -317,6 +356,10 @@ export default function Home() {
     if (mode === "new" || !records) {
       const name = preview.filename.replace(/\.[^.]+$/, "") + ".csv";
       await applyDataset(name, incoming, recordsToCSV(incoming), null);
+      if (fbUser) {
+        savePortfolio(fbUser.uid, name, incoming);
+        setMyPortfolios(listPortfolios(fbUser.uid));
+      }
       toast(`Started “${name}” with ${incoming.length} holdings.`, "green");
     } else {
       const { merged, added, skipped } = mergeRows(records, incoming);
@@ -375,62 +418,91 @@ export default function Home() {
           onClose={() => setPreview(null)} />
       )}
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
-      <header className="sticky top-0 z-10 border-b border-edge bg-ink/90 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3">
-          <div className="mr-2">
-            <div className="flex items-center gap-2 text-lg font-extrabold tracking-tight">
-              <LogoMark /> Portfolio Health Advisor
-            </div>
-            <div className="text-xs text-fog">Seven-agent orchestra · free-tier AI</div>
+      <header className="sticky top-0 z-10 border-b border-edge bg-ink-soft backdrop-blur">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-4 py-2.5">
+          <div className="mr-1 flex items-center gap-2 text-base font-extrabold tracking-tight" title="Seven-agent orchestra · free-tier AI">
+            <LogoMark /> <span className="hidden sm:inline">Portfolio Health Advisor</span>
           </div>
-          <select className={`${inputCls} max-w-60`} value={fileName}
-            onChange={(e) => loadDataset(e.target.value)} aria-label="Dataset">
-            {DATASETS.map((d) => <option key={d}>{d}</option>)}
-          </select>
-          <button className={btnGhost} onClick={() => fileRef.current?.click()}>Upload CSV</button>
+          <div className="relative">
+            <button className={btnPrimary} onClick={() => { setNewMenu((v) => !v); setExportMenu(false); }}>
+              <span className="inline-flex items-center gap-1.5"><PlusIcon />New</span>
+            </button>
+            {newMenu && (
+              <div className="absolute left-0 top-full z-20 mt-1 w-60 rounded-xl border border-edge bg-panel p-1.5 shadow-card">
+                <button className="block w-full rounded-lg px-3 py-2 text-left text-sm text-paper hover:bg-well"
+                  onClick={() => { setNewMenu(false); stmtRef.current?.click(); }}>
+                  <span className="inline-flex items-center gap-2"><UploadIcon />Upload statement (PDF/Excel/CSV)</span>
+                </button>
+                <button className="block w-full rounded-lg px-3 py-2 text-left text-sm text-paper hover:bg-well"
+                  onClick={() => { setNewMenu(false); fileRef.current?.click(); }}>
+                  <span className="inline-flex items-center gap-2"><UploadIcon />Import plain CSV</span>
+                </button>
+                <button className="block w-full rounded-lg px-3 py-2 text-left text-sm text-paper hover:bg-well"
+                  onClick={() => { setNewMenu(false); startBlank(); }}>
+                  <span className="inline-flex items-center gap-2"><PlusIcon />Blank portfolio</span>
+                </button>
+                <button className="block w-full rounded-lg px-3 py-2 text-left text-sm text-paper hover:bg-well"
+                  onClick={() => { setNewMenu(false); setTab("Holdings"); }}>
+                  <span className="inline-flex items-center gap-2"><WalletIcon />Add a holding</span>
+                </button>
+              </div>
+            )}
+          </div>
+          <input ref={stmtRef} type="file" accept=".csv,.xlsx,.xls,.pdf,.txt,.md" className="hidden"
+            onChange={(e) => { uploadStatement(e.target.files?.[0]); e.target.value = ""; }} />
           <input ref={fileRef} type="file" accept=".csv" className="hidden"
             onChange={(e) => { onUpload(e.target.files?.[0]); e.target.value = ""; }} />
           {live
             ? <button className={btnGhost} onClick={revertLive}>Back to CSV</button>
-            :             <button className={btnPrimary} disabled={liveLoading} onClick={goLive}>
+            : <button className={btnGhost} disabled={liveLoading} onClick={goLive} title="Refresh real-ticker prices">
                 <span className="inline-flex items-center gap-1.5">
-                  <RefreshIcon />{liveLoading ? "Fetching prices…" : "Go live"}
+                  <RefreshIcon />{liveLoading ? "Fetching…" : "Go live"}
                 </span>
               </button>}
           <LiveBadge live={live} />
-          {fbUser ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-edge bg-well px-2.5 py-1 text-xs font-semibold text-paper" title={fbUser.email}>
-              <UserIcon />{fbUser.email.length > 18 ? fbUser.email.slice(0, 18) + "…" : fbUser.email}
-            </span>
-          ) : null}
-          {fbUser ? (
-            <button className={btnGhost} onClick={signOut} title="Sign out">
-              <span className="inline-flex items-center gap-1.5"><LogoutIcon />Out</span>
-            </button>
-          ) : (
-            <button className={btnGhost} onClick={() => setShowAuth(true)}>
-              <span className="inline-flex items-center gap-1.5"><UserIcon />Sign in</span>
-            </button>
-          )}
-          <div className="ml-auto flex gap-2">
+          <div className="ml-auto flex items-center gap-2">
+            {fbUser ? (
+              <span className="hidden items-center gap-1.5 rounded-full border border-edge bg-well px-2.5 py-1 text-xs font-semibold text-paper md:inline-flex" title={fbUser.email}>
+                <UserIcon />{fbUser.email.length > 16 ? fbUser.email.slice(0, 16) + "…" : fbUser.email}
+              </span>
+            ) : null}
+            {fbUser ? (
+              <button className={btnGhost} onClick={signOut} title="Sign out">
+                <span className="inline-flex items-center gap-1.5"><LogoutIcon />Out</span>
+              </button>
+            ) : (
+              <button className={btnGhost} onClick={() => setShowAuth(true)}>
+                <span className="inline-flex items-center gap-1.5"><UserIcon />Sign in</span>
+              </button>
+            )}
+            <div className="relative">
+              <button className={btnGhost} onClick={() => { setExportMenu((v) => !v); setNewMenu(false); }}>
+                <span className="inline-flex items-center gap-1.5"><DownloadIcon />Export</span>
+              </button>
+              {exportMenu && (
+                <div className="absolute right-0 top-full z-20 mt-1 w-44 rounded-xl border border-edge bg-panel p-1.5 shadow-card">
+                  {[["md", "Report (.md)"], ["json", "Data (.json)"], ["csv", "Holdings (.csv)"]].map(([kind, label]) => (
+                    <button key={kind} className="block w-full rounded-lg px-3 py-2 text-left text-sm text-paper hover:bg-well"
+                      onClick={() => {
+                        setExportMenu(false);
+                        if (kind === "csv") downloadCSV();
+                        else exportAll(kind as "md" | "json");
+                      }}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <ThemeToggle />
-            <button className={btnGhost} onClick={saveCurrent} title="Save this analysis to your library">
-              <span className="inline-flex items-center gap-1.5"><BookmarkIcon />Save</span>
-            </button>
-            <button className={btnGhost} onClick={() => exportAll("md")}>
-              <span className="inline-flex items-center gap-1.5"><DownloadIcon />.md</span>
-            </button>
-            <button className={btnGhost} onClick={() => exportAll("json")}>
-              <span className="inline-flex items-center gap-1.5"><DownloadIcon />.json</span>
-            </button>
           </div>
         </div>
         <nav className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4 pb-2" aria-label="Views">
-          {TABS.map((name) => (
-            <button key={name} onClick={() => setTab(name)}
-              className={`rounded-lg px-3.5 py-1.5 text-sm font-semibold whitespace-nowrap transition-colors ${
-                tab === name ? "bg-signal text-ink" : "text-fog hover:bg-well"}`}>
-              {name}
+          {TABS.map(({ id, icon: Icon }) => (
+            <button key={id} onClick={() => { setTab(id); setNewMenu(false); setExportMenu(false); }}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-sm font-semibold whitespace-nowrap transition-colors ${
+                tab === id ? "bg-signal text-ink" : "text-fog hover:bg-well"}`}>
+              <Icon />{id}
             </button>
           ))}
         </nav>
@@ -438,7 +510,7 @@ export default function Home() {
 
       <main className="mx-auto w-full max-w-7xl flex-1 space-y-4 px-4 py-5" key={tab}>
         {loadError && (
-          <div className="rounded-xl border border-danger/40 bg-danger/10 p-4 text-sm text-down">
+          <div className="rounded-xl border border-down bg-down-soft p-4 text-sm text-down">
             {loadError}
           </div>
         )}
@@ -449,7 +521,7 @@ export default function Home() {
           </div>
         )}
 
-        {bundle && t && h && r && tab === "Dashboard" && (
+        {bundle && t && h && r && tab === "Overview" && (
           <div className="anim-rise">
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
               <Stat label="Total value" value={money(t.total_value)} sub={`cost ${money(t.total_cost)}`} />
@@ -462,13 +534,13 @@ export default function Home() {
                 tone={r.risk_level === "LOW" ? "green" : r.risk_level === "MEDIUM" ? "yellow" : "red"} />
             </div>
             <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <Card title="Health breakdown" accent="#34d399">
+              <Card title="Health breakdown" accent="#10b981">
                 <HealthBar score={h.score} grade={h.grade} />
                 <ul className="mt-3 space-y-1 text-sm text-fog">
                   {h.breakdown.map((b, i) => <li key={i}>• {b}</li>)}
                 </ul>
               </Card>
-              <Card title="Advisor recommendation" accent="#22d3ee">
+              <Card title="Advisor recommendation" accent="#3b82f6">
                 {adviceLoading || !advice
                   ? <Skeleton lines={5} />
                   : <>
@@ -476,10 +548,10 @@ export default function Home() {
                       {adviceMeta && <p className="mt-2 text-xs text-mist">via {adviceMeta}</p>}
                     </>}
               </Card>
-              <Card title="Agent orchestra — latest run" accent="#a78bfa">
+              <Card title="Agent orchestra — latest run" accent="#8b5cf6">
                 <Timeline stages={timeline} />
               </Card>
-              <Card title="Today's brief — Scout" accent="#34d399">
+              <Card title="Today's brief — Scout" accent="#10b981">
                 <ul className="space-y-2.5">
                   {bundle.risks.insights.map((ins, i) => (
                     <li key={i}>
@@ -492,13 +564,13 @@ export default function Home() {
                   ))}
                 </ul>
               </Card>
-              <Card title="Sector allocation" accent="#a78bfa">
+              <Card title="Sector allocation" accent="#8b5cf6">
                 <AllocationPie allocation={bundle.findings.allocation} />
               </Card>
-              <Card title="Top winners & losers" accent="#f472b6">
+              <Card title="Top winners & losers" accent="#ec4899">
                 <PnlBars returns={bundle.findings.returns} />
               </Card>
-              <Card title={`Alerts (${bundle.risks.alerts.length})`} accent="#fbbf24">
+              <Card title={`Alerts (${bundle.risks.alerts.length})`} accent="#f59e0b">
                 <div className="grid gap-2">
                   {bundle.risks.alerts.slice(0, 4).map((a, i) => (
                     <div key={i} className="rounded-lg bg-well p-3 text-sm">
@@ -525,76 +597,19 @@ export default function Home() {
           </div>
         )}
 
-        {bundle && records && tab === "Rebalance" && (
-          <div className="anim-rise">
+        {bundle && records && tab === "Plan" && (
+          <div className="anim-rise space-y-4">
             <PlanView records={records} harvest={bundle.risks.harvest} />
-          </div>
-        )}
-
-        {bundle && tab === "Projection" && (
-          <div className="anim-rise">
             <ProjectionView projection={bundle.risks.projection} goal={bundle.risks.goal} />
           </div>
         )}
 
         {bundle && records && tab === "Lab" && (
-          <div className="anim-rise">
+          <div className="anim-rise space-y-4">
             <LabView records={records}
               tickers={bundle.findings.returns.holdings.map((x) => x.ticker)}
               sectors={Object.keys(bundle.findings.allocation.by_sector).sort()} />
-          </div>
-        )}
-
-        {bundle && tab === "Q&A" && (
-          <div className="anim-rise space-y-4">
-            <ChatView onAsk={ask} thinking={thinking} />
-            <div className="space-y-3">
-              {chat.map((m, i) => (
-                <div key={i} className={`rounded-xl p-4 text-sm leading-relaxed ${
-                  m.role === "user" ? "ml-8 bg-well" : "mr-8 border border-signal/20 bg-panel"}`}>
-                  <div className="mb-1 text-xs font-bold uppercase tracking-wide text-mist">
-                    {m.role === "user" ? "You" : "Advisor"}
-                  </div>
-                  <div className="whitespace-pre-line text-paper">{m.content}</div>
-                </div>
-              ))}
-              {thinking && (
-                <div className="mr-8 rounded-xl border border-signal/20 bg-panel p-4 text-sm text-fog">
-                  Advisor is thinking<span className="live-dot">…</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {tab === "Datasets" && (
-          <div className="anim-rise grid gap-4 md:grid-cols-2">
-            <Card title="Switch portfolio" accent="#22d3ee">
-              <div className="mb-3 grid grid-cols-2 gap-2">
-                <button className={btnPrimary} disabled={extracting} onClick={() => stmtRef.current?.click()}>
-                  <span className="inline-flex items-center gap-1.5"><UploadIcon />
-                    {extracting ? "Reading file…" : "Upload statement"}</span>
-                </button>
-                <button className={btnGhost} onClick={startBlank}>
-                  <span className="inline-flex items-center gap-1.5"><PlusIcon />Blank portfolio</span>
-                </button>
-              </div>
-              <input ref={stmtRef} type="file" accept=".csv,.xlsx,.xls,.pdf,.txt,.md" className="hidden"
-                onChange={(e) => { uploadStatement(e.target.files?.[0]); e.target.value = ""; }} />
-              <p className="mb-2 text-xs text-mist">Broker PDF, Excel, CSV or text — the Extractor Agent pulls out holdings for your review.</p>
-              <div className="space-y-2">
-                {DATASETS.map((d) => (
-                  <button key={d} onClick={() => loadDataset(d)}
-                    className={`block w-full rounded-lg border px-4 py-2.5 text-left text-sm font-medium transition-colors ${
-                      d === fileName && !live ? "border-signal bg-signal/10 text-signal"
-                        : "border-edge bg-well text-paper hover:bg-well"}`}>
-                    {d === fileName ? <span className="mr-1 inline-flex align-[-2px] text-signal"><ArrowRightIcon /></span> : ""}{d}
-                  </button>
-                ))}
-              </div>
-              <p className="mt-2 text-xs text-mist">Or upload any CSV with the same columns via the header button.</p>
-            </Card>
-            <Card title="Compare two portfolios" accent="#fbbf24">
+            <Card title="Compare two portfolios" accent="#f59e0b">
               <div className="grid grid-cols-2 gap-3">
                 <select className={inputCls} value={cmpA} onChange={(e) => setCmpA(e.target.value)} aria-label="Compare A">
                   {DATASETS.map((d) => <option key={d}>{d}</option>)}
@@ -636,44 +651,129 @@ export default function Home() {
           </div>
         )}
 
-        {tab === "Library" && (
-          <div className="anim-rise">
-            {!fbUser ? (
-              <Card title="Your library lives here" accent="#22d3ee">
-                <p className="text-sm text-fog">
-                  Sign in to save any analysis and reopen it later — no AI calls, no waiting.
-                  Secured by Firebase Auth, stored privately in your browser.
-                </p>
-                <button className={`${btnPrimary} mt-3`} onClick={() => setShowAuth(true)}>
-                  <span className="inline-flex items-center gap-1.5"><UserIcon />Sign in / Sign up</span>
-                </button>
-              </Card>
-            ) : (
-              <Card title={`Saved reports — ${library.length}`} accent="#22d3ee" wide>
-                <button className={`${btnGhost} mb-3`} onClick={saveCurrent}>
-                  <span className="inline-flex items-center gap-1.5"><BookmarkIcon />Save current analysis</span>
-                </button>
-                {library.length === 0 && (
-                  <p className="text-sm text-fog">Nothing saved yet. Analyze anything, then hit Save.</p>
-                )}
-                <div className="grid gap-3 md:grid-cols-2">
-                  {library.map((item) => (
-                    <div key={item.id} className="rounded-xl border border-edge bg-well p-4">
-                      <div className="font-semibold text-paper">{item.name}</div>
-                      <div className="mt-1 text-xs text-fog">
-                        {item.holdings} holdings · {money(item.value)} ·
-                        health {item.health?.score ?? "?"}/100({item.health?.grade ?? "?"}) ·
-                        saved {new Date(item.savedAt).toLocaleString()}
-                      </div>
-                      <div className="mt-3 flex gap-2">
-                        <button className={btnPrimary} onClick={() => loadSaved(item.id)}>Open</button>
-                        <button className={btnGhost} onClick={() => deleteSaved(item.id)}>Delete</button>
-                      </div>
-                    </div>
-                  ))}
+        {bundle && tab === "Ask" && (
+          <div className="anim-rise space-y-4">
+            <ChatView onAsk={ask} thinking={thinking} />
+            <div className="space-y-3">
+              {chat.map((m, i) => (
+                <div key={i} className={`rounded-xl p-4 text-sm leading-relaxed ${
+                  m.role === "user" ? "ml-8 bg-well" : "mr-8 border border-signal/20 bg-panel"}`}>
+                  <div className="mb-1 text-xs font-bold uppercase tracking-wide text-mist">
+                    {m.role === "user" ? "You" : "Advisor"}
+                  </div>
+                  <div className="whitespace-pre-line text-paper">{m.content}</div>
                 </div>
-              </Card>
-            )}
+              ))}
+              {thinking && (
+                <div className="mr-8 rounded-xl border border-signal/20 bg-panel p-4 text-sm text-fog">
+                  Advisor is thinking<span className="live-dot">…</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {tab === "My Data" && (
+          <div className="anim-rise grid gap-4 md:grid-cols-2">
+            <Card title={fbUser ? "Your portfolios — saved to your account" : "Your portfolios"} accent="#3b82f6">
+              {!fbUser ? (
+                <div>
+                  <p className="text-sm text-fog">
+                    Sign in to keep your own portfolios here — uploads, blanks, and edits persist across visits.
+                  </p>
+                  <button className={`${btnPrimary} mt-3`} onClick={() => setShowAuth(true)}>
+                    <span className="inline-flex items-center gap-1.5"><UserIcon />Sign in / Sign up</span>
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <button className={`${btnGhost} mb-3`} onClick={persistCurrent} disabled={!bundle}>
+                    <span className="inline-flex items-center gap-1.5"><BookmarkIcon />Save current as “{fileName}”</span>
+                  </button>
+                  {myPortfolios.length === 0 && (
+                    <p className="text-sm text-fog">
+                      Nothing of yours yet. Hit <b>＋ New</b> up top — upload a statement, start blank, or import a CSV — and it lands here automatically.
+                    </p>
+                  )}
+                  <div className="space-y-2">
+                    {myPortfolios.map((p) => (
+                      <div key={p.id} className="flex items-center justify-between gap-2 rounded-lg border border-edge bg-well px-3 py-2">
+                        <button className="min-w-0 flex-1 truncate text-left text-sm font-medium text-paper hover:text-signal"
+                          onClick={() => openPortfolio(p.id)} title={`Open ${p.name}`}>
+                          {p.name} <span className="text-xs text-mist">· {p.holdings} holdings</span>
+                        </button>
+                        <button onClick={() => removePortfolio(p.id)} title={`Delete ${p.name}`} aria-label={`Delete ${p.name}`}
+                          className="rounded-md p-1.5 text-mist hover:bg-down-soft hover:text-down">
+                          <TrashIcon />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </Card>
+            <Card title="Samples & uploads" accent="#3b82f6">
+              <div className="mb-3 grid grid-cols-2 gap-2">
+                <button className={btnPrimary} disabled={extracting} onClick={() => stmtRef.current?.click()}>
+                  <span className="inline-flex items-center gap-1.5"><UploadIcon />
+                    {extracting ? "Reading file…" : "Upload statement"}</span>
+                </button>
+                <button className={btnGhost} onClick={startBlank}>
+                  <span className="inline-flex items-center gap-1.5"><PlusIcon />Blank portfolio</span>
+                </button>
+              </div>
+              <input ref={stmtRef} type="file" accept=".csv,.xlsx,.xls,.pdf,.txt,.md" className="hidden"
+                onChange={(e) => { uploadStatement(e.target.files?.[0]); e.target.value = ""; }} />
+              <p className="mb-2 text-xs text-mist">Broker PDF, Excel, CSV or text — the Extractor Agent pulls out holdings for your review.</p>
+              <div className="space-y-2">
+                {DATASETS.map((d) => (
+                  <button key={d} onClick={() => loadDataset(d)}
+                    className={`block w-full rounded-lg border px-4 py-2.5 text-left text-sm font-medium transition-colors ${
+                      d === fileName && !live ? "border-signal bg-signal/10 text-signal"
+                        : "border-edge bg-well text-paper hover:bg-well"}`}>
+                    {d === fileName ? <span className="mr-1 inline-flex align-[-2px] text-signal"><ArrowRightIcon /></span> : ""}{d}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-xs text-mist">Samples are read-only starters — your uploads and blanks live in “Your portfolios” once signed in.</p>
+            </Card>
+            <Card title={`Saved reports — ${library.length}`} accent="#3b82f6" wide>
+              {!fbUser ? (
+                <div>
+                  <p className="text-sm text-fog">
+                    Sign in to save any analysis and reopen it later — no AI calls, no waiting.
+                  </p>
+                  <button className={`${btnPrimary} mt-3`} onClick={() => setShowAuth(true)}>
+                    <span className="inline-flex items-center gap-1.5"><UserIcon />Sign in / Sign up</span>
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <button className={`${btnGhost} mb-3`} onClick={saveCurrent}>
+                    <span className="inline-flex items-center gap-1.5"><BookmarkIcon />Save current analysis</span>
+                  </button>
+                  {library.length === 0 && (
+                    <p className="text-sm text-fog">Nothing saved yet. Analyze anything, then hit Save.</p>
+                  )}
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {library.map((item) => (
+                      <div key={item.id} className="rounded-xl border border-edge bg-well p-4">
+                        <div className="font-semibold text-paper">{item.name}</div>
+                        <div className="mt-1 text-xs text-fog">
+                          {item.holdings} holdings · {money(item.value)} ·
+                          health {item.health?.score ?? "?"}/100({item.health?.grade ?? "?"}) ·
+                          saved {new Date(item.savedAt).toLocaleString()}
+                        </div>
+                        <div className="mt-3 flex gap-2">
+                          <button className={btnPrimary} onClick={() => loadSaved(item.id)}>Open</button>
+                          <button className={btnGhost} onClick={() => deleteSaved(item.id)}>Delete</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </Card>
           </div>
         )}
       </main>

@@ -167,11 +167,11 @@ identical to Python), same agents, charts included:
 ./run-web.sh            # → http://localhost:3000
 ```
 
-Tabs: Dashboard (stats, health bar, **agent orchestra timeline**, allocation pie, P&L bars, alerts, advice) ·
-Holdings (searchable, **add / edit / delete**, download your edited CSV) · Rebalance (cap slider + harvest) · Projection (SIP
-planner) · Lab (trim / targets / stress-test) · Q&A chat · Datasets (switch,
-**upload a broker PDF / Excel / CSV for the Extractor Agent**, blank portfolio,
-upload your CSV, A/B compare). Export downloads `.md`/`.json` reports.
+Tabs: Overview (stats, health bar, **agent orchestra timeline**, allocation pie, P&L bars, alerts, advice) ·
+Holdings (searchable, **add / edit / delete**, download your edited CSV) · Plan (rebalance + projection + SIP
+planner) · Lab (trim / targets / stress-test + A/B compare) · Ask (chat) · My Data (your saved portfolios
+when signed in, samples, **upload a broker PDF / Excel / CSV for the Extractor Agent**, blank portfolio,
+saved reports). Header: **＋ New** (upload / import / blank / add holding), live prices, theme, auth, Export menu.
 API keys live in `web/.env.local`; without one the rule engine takes over.
 Only the Advice and Q&A calls hit the network — everything else computes
 instantly in your browser. Details in `web/README.md`, design tokens in `design.md`.

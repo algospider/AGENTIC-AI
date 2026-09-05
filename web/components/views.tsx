@@ -224,7 +224,7 @@ export function PlanView({ records, harvest }: {
   const live = rebalancePlan(records, cap);
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <Card title={`Rebalance plan — frees ~${money(live.freed_total)}`} accent="#22d3ee" wide>
+      <Card title={`Rebalance plan — frees ~${money(live.freed_total)}`} accent="#3b82f6" wide>
         <div className="mb-3 flex max-w-xs items-center gap-3">
           <Field label={`Sector cap: ${cap}%`}>
             <input type="range" min={20} max={50} value={cap} onChange={(e) => setCap(Number(e.target.value))} className="w-full accent-signal" />
@@ -232,7 +232,7 @@ export function PlanView({ records, harvest }: {
         </div>
         <PlanTable plan={live} />
       </Card>
-      <Card title={`Tax-loss harvest — save ~${money(harvest.total_tax_saved)}`} accent="#e879f9">
+      <Card title={`Tax-loss harvest — save ~${money(harvest.total_tax_saved)}`} accent="#ec4899">
         {harvest.pairs.length === 0 && <p className="text-sm text-fog">{harvest.note}</p>}
         <ul className="space-y-2 text-sm">
           {harvest.pairs.map((p) => (
@@ -263,7 +263,7 @@ export function ProjectionView({ projection, goal }: {
   };
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <Card title={`Growth — ${money(projection.starting_value)} over ${projection.years}y`} accent="#22d3ee">
+      <Card title={`Growth — ${money(projection.starting_value)} over ${projection.years}y`} accent="#3b82f6">
         <ul className="space-y-2">
           {projection.scenarios.map((s) => (
             <li key={s.label} className="flex items-center justify-between rounded-lg bg-well px-4 py-3">
@@ -274,7 +274,7 @@ export function ProjectionView({ projection, goal }: {
         </ul>
         <p className="mt-2 text-xs text-mist">{projection.note}</p>
       </Card>
-      <Card title="SIP goal planner" accent="#34d399">
+      <Card title="SIP goal planner" accent="#10b981">
         <div className="grid grid-cols-3 gap-3">
           <Field label="Target"><input className={inputCls} value={target} onChange={(e) => setTarget(e.target.value)} inputMode="decimal" /></Field>
           <Field label="Years"><input className={inputCls} value={years} onChange={(e) => setYears(e.target.value)} inputMode="numeric" /></Field>
@@ -330,7 +330,7 @@ export function LabView({ records, tickers, sectors }: {
 
   return (
     <div className="grid gap-4 md:grid-cols-3">
-      <Card title="Trim a holding" accent="#22d3ee">
+      <Card title="Trim a holding" accent="#3b82f6">
         <div className="space-y-3">
           <Field label="Ticker">
             <select className={inputCls} value={ticker} onChange={(e) => setTicker(e.target.value)}>
@@ -345,7 +345,7 @@ export function LabView({ records, tickers, sectors }: {
           {trimOut && <p className="rounded-lg bg-well p-3 text-sm text-paper">{trimOut}</p>}
         </div>
       </Card>
-      <Card title="Target weights" accent="#a78bfa">
+      <Card title="Target weights" accent="#8b5cf6">
         <div className="space-y-3">
           <Field label="Sector=percent, comma separated">
             <input className={inputCls} value={targets} onChange={(e) => setTargets(e.target.value)} />
@@ -354,7 +354,7 @@ export function LabView({ records, tickers, sectors }: {
           {targetOut && <p className="rounded-lg bg-well p-3 text-sm text-paper">{targetOut}</p>}
         </div>
       </Card>
-      <Card title="Stress-test a crash" accent="#fbbf24">
+      <Card title="Stress-test a crash" accent="#f59e0b">
         <div className="space-y-3">
           <Field label="Sector (blank = biggest)">
             <select className={inputCls} value={sector} onChange={(e) => setSector(e.target.value)}>

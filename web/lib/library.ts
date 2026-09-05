@@ -60,3 +60,54 @@ export function deleteReport(uid: string, id: string): boolean {
   writeAll(uid, next);
   return true;
 }
+
+// ---- user's own datasets (manual builds + uploads), per account ----
+export interface SavedPortfolio {
+  id: string; name: string; savedAt: string;
+  holdings: number; records: Record<string, string>[];
+}
+
+const portfoliosKey = (uid: string) => `pha-portfolios-${uid}`;
+
+function readPortfolios(uid: string): SavedPortfolio[] {
+  try {
+    const raw = localStorage.getItem(portfoliosKey(uid));
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
+function writePortfolios(uid: string, items: SavedPortfolio[]) {
+  try {
+    localStorage.setItem(portfoliosKey(uid), JSON.stringify(items.slice(0, 30)));
+  } catch {
+    /* storage full/blocked — portfolios just won't persist */
+  }
+}
+
+export function listPortfolios(uid: string): SavedPortfolio[] {
+  return readPortfolios(uid);
+}
+
+/** Save or update by name (re-saving the same name replaces it). */
+export function savePortfolio(uid: string, name: string, records: Record<string, string>[]): SavedPortfolio {
+  const clean = name.slice(0, 80) || "Untitled";
+  const item: SavedPortfolio = {
+    id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`,
+    name: clean, savedAt: new Date().toISOString(),
+    holdings: records.length, records,
+  };
+  const rest = readPortfolios(uid).filter((x) => x.name !== clean);
+  writePortfolios(uid, [item, ...rest]);
+  return item;
+}
+
+export function deletePortfolio(uid: string, id: string): boolean {
+  const items = readPortfolios(uid);
+  const next = items.filter((x) => x.id !== id);
+  if (next.length === items.length) return false;
+  writePortfolios(uid, next);
+  return true;
+}

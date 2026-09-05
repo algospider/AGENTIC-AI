@@ -63,11 +63,14 @@ The repo ships a `netlify.toml`, so deployment is configuration-free:
 | `lib/library.ts` | Personal library in per-user localStorage (Netlify-safe, no server disk) |
 | `public/datasets/` | All 6 sample CSVs served to the browser |
 
-Tabs: **Dashboard** (stats, health, pie, P&L bars, alerts, advice) ·
+Tabs: **Overview** (stats, health bar, agent timeline, pie, P&L bars, alerts, advice) ·
 **Holdings** (search, **add / edit / delete**, download CSV) ·
-**Rebalance** (cap slider + harvest) · **Projection** (scenarios + SIP planner) ·
-**Lab** (trim / targets / stress) · **Q&A** (chat with suggestion chips) ·
-**Datasets** (switch, **upload broker PDF/Excel/CSV**, blank portfolio, A/B compare).
+**Plan** (rebalance + projection + SIP planner) · **Lab** (trim / targets /
+stress-test + A/B compare) · **Ask** (chat with suggestion chips) ·
+**My Data** (your saved portfolios when signed in, samples, **upload a broker
+PDF / Excel / CSV for the Extractor Agent**, blank portfolio, saved reports).
+Header: **＋ New** (upload / import / blank / add holding), live prices, theme,
+auth, Export menu.
 
 All analysis except the two LLM calls runs instantly in the browser.
 

@@ -22,9 +22,37 @@ def _validate(portfolio: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def _pct_normalize(exact: dict) -> dict:
+    """Round a {key: exact_pct} map to 2dp so values sum to exactly 100.00.
+
+    Largest-remainder method: floor each to cents, hand leftover cents to
+    the entries with the biggest fractional parts. Fixes the classic
+    99.99/100.01 drift that grows with holding count.
+    """
+    if not exact:
+        return {}
+    total = sum(exact.values())
+    if total == 0:
+        return {k: 0.0 for k in exact}
+    scaled = {k: v / total * 100 for k, v in exact.items()}
+    floored = {k: int(v * 100) // 1 / 100 for k, v in scaled.items()}
+    leftover = round(100.0 - sum(floored.values()), 2)
+    cents = int(round(leftover * 100))
+    remainders = sorted(exact, key=lambda k: scaled[k] - floored[k], reverse=True)
+    out = dict(floored)
+    for i in range(abs(cents)):
+        k = remainders[i % len(remainders)]
+        out[k] = round(out[k] + (0.01 if cents > 0 else -0.01), 2)
+    return {k: float(v) for k, v in out.items()}
+
+
 def calculate_returns(portfolio: pd.DataFrame) -> dict:
     """
     Compute current value and gain/loss per holding and overall.
+
+    Accuracy: all math runs on exact (unrounded) values, vectorized in
+    pandas; rounding to 2dp happens only on output. Totals are computed
+    from exact sums, so they always reconcile with the holdings.
 
     Returns:
         {
@@ -35,41 +63,39 @@ def calculate_returns(portfolio: pd.DataFrame) -> dict:
                      best_ticker, worst_ticker, num_winners, num_losers}
         }
     """
-    df = _validate(portfolio)
-    holdings = []
-    for _, r in df.iterrows():
-        cost = round(float(r["quantity"]) * float(r["buy_price"]), 2)
-        cur = round(float(r["quantity"]) * float(r["current_price"]), 2)
-        pnl = round(cur - cost, 2)
-        pnl_pct = round((pnl / cost * 100) if cost else 0.0, 2)
-        holdings.append({
-            "ticker": str(r["ticker"]),
-            "company_name": str(r["company_name"]),
-            "sector": str(r["sector"]),
-            "quantity": float(r["quantity"]),
-            "buy_price": float(r["buy_price"]),
-            "current_price": float(r["current_price"]),
-            "cost_value": cost,
-            "current_value": cur,
-            "pnl": pnl,
-            "pnl_pct": pnl_pct,
-        })
-    holdings.sort(key=lambda h: h["pnl"], reverse=True)
-    total_cost = round(sum(h["cost_value"] for h in holdings), 2)
-    total_value = round(sum(h["current_value"] for h in holdings), 2)
-    total_pnl = round(total_value - total_cost, 2)
-    return_pct = round((total_pnl / total_cost * 100) if total_cost else 0.0, 2)
+    df = _validate(portfolio).copy()
+    df["cost_value"] = df["quantity"] * df["buy_price"]
+    df["current_value"] = df["quantity"] * df["current_price"]
+    df["pnl"] = df["current_value"] - df["cost_value"]
+    df["pnl_pct"] = (df["pnl"] / df["cost_value"].replace(0, float("nan")) * 100).fillna(0.0)
+    df = df.sort_values("pnl", ascending=False, kind="mergesort")
+    # Exact totals first, round only for output
+    total_cost = float(df["cost_value"].sum())
+    total_value = float(df["current_value"].sum())
+    total_pnl = total_value - total_cost
+    holdings = [{
+        "ticker": str(r.ticker),
+        "company_name": str(r.company_name),
+        "sector": str(r.sector),
+        "quantity": float(r.quantity),
+        "buy_price": float(r.buy_price),
+        "current_price": float(r.current_price),
+        "cost_value": round(float(r.cost_value), 2),
+        "current_value": round(float(r.current_value), 2),
+        "pnl": round(float(r.pnl), 2),
+        "pnl_pct": round(float(r.pnl_pct), 2),
+    } for r in df.itertuples()]
     return {
         "holdings": holdings,
         "totals": {
-            "total_cost": total_cost,
-            "total_value": total_value,
-            "total_pnl": total_pnl,
-            "return_pct": return_pct,
+            "total_cost": round(total_cost, 2),
+            "total_value": round(total_value, 2),
+            "total_pnl": round(total_pnl, 2),
+            "return_pct": round((total_pnl / total_cost * 100) if total_cost else 0.0, 2),
             "best_ticker": holdings[0]["ticker"] if holdings else None,
             "worst_ticker": holdings[-1]["ticker"] if holdings else None,
-            "num_winners": sum(1 for h in holdings if h["pnl"] > 0),
-            "num_losers": sum(1 for h in holdings if h["pnl"] < 0),
+            "num_winners": int((df["pnl"] > 0).sum()),
+            "num_losers": int((df["pnl"] < 0).sum()),
         },
     }
 
@@ -78,31 +104,37 @@ def calculate_allocation(portfolio: pd.DataFrame) -> dict:
     """
     Compute % concentration by sector (based on current value).
 
+    Accuracy: weights come from exact values; displayed percentages are
+    largest-remainder normalized so sectors always sum to exactly 100.00,
+    and HHI is computed from exact (not rounded) weights.
+
     Returns:
         {"by_sector": {sector: pct}, "by_holding": {ticker: pct},
          "top_sector": ..., "top_sector_pct": ..., "top_holding": ...,
          "top_holding_pct": ..., "hhi": ... (0-10000 concentration index)}
     """
-    df = _validate(portfolio)
-    df = df.copy()
+    df = _validate(portfolio).copy()
     df["current_value"] = df["quantity"] * df["current_price"]
     total = float(df["current_value"].sum())
     if total == 0:
         return {"by_sector": {}, "by_holding": {}, "top_sector": None,
                 "top_sector_pct": 0.0, "top_holding": None, "top_holding_pct": 0.0, "hhi": 0.0}
-    by_sector = (df.groupby("sector")["current_value"].sum() / total * 100).round(2).to_dict()
-    by_holding = ((df.set_index("ticker")["current_value"] / total * 100).round(2)).to_dict()
-    top_sector = max(by_sector, key=by_sector.get)
-    top_holding = max(by_holding, key=by_holding.get)
-    # HHI on sector weights (0-10000 scale)
-    hhi = round(sum((w ** 2 for w in by_sector.values())), 2)
+    sector_exact = (df.groupby("sector")["current_value"].sum() / total * 100).to_dict()
+    # groupby (not set_index): duplicate tickers in user CSVs aggregate instead of vanishing
+    holding_exact = (df.groupby("ticker")["current_value"].sum() / total * 100).to_dict()
+    by_sector = _pct_normalize({str(k): float(v) for k, v in sector_exact.items()})
+    by_holding = {str(k): round(float(v), 2) for k, v in holding_exact.items()}
+    top_sector = max(sector_exact, key=sector_exact.get)
+    top_holding = max(holding_exact, key=holding_exact.get)
+    # HHI from exact weights (0-10000 scale)
+    hhi = round(sum(float(w) ** 2 for w in sector_exact.values()), 2)
     return {
-        "by_sector": {str(k): float(v) for k, v in by_sector.items()},
-        "by_holding": {str(k): float(v) for k, v in by_holding.items()},
+        "by_sector": by_sector,
+        "by_holding": by_holding,
         "top_sector": str(top_sector),
-        "top_sector_pct": float(by_sector[top_sector]),
+        "top_sector_pct": by_sector[str(top_sector)],
         "top_holding": str(top_holding),
-        "top_holding_pct": float(by_holding[top_holding]),
+        "top_holding_pct": by_holding[str(top_holding)],
         "hhi": float(hhi),
     }
 
@@ -183,11 +215,13 @@ def simulate_rebalance(portfolio: pd.DataFrame, target_sector_weights: dict[str,
         out["deltas"] = deltas
         out["note"] = "Positive delta_value = buy more; negative = trim. Adds to 0 only if targets sum to 100."
     elif sell_ticker:
-        row = df[df["ticker"] == sell_ticker]
-        if row.empty:
+        rows = df[df["ticker"] == sell_ticker]
+        if rows.empty:
             raise ValueError(f"ticker {sell_ticker} not in portfolio")
-        r = row.iloc[0]
-        proceeds = round(float(r["quantity"]) * float(r["current_price"]) * sell_fraction, 2)
+        # aggregate: the same ticker may appear on multiple rows in user CSVs
+        qty = float(rows["quantity"].sum())
+        avg_price = float((rows["quantity"] * rows["current_price"]).sum() / qty) if qty else 0.0
+        proceeds = round(qty * avg_price * sell_fraction, 2)
         out["mode"] = "trim_holding"
         out["sell_ticker"] = sell_ticker
         out["sell_fraction"] = sell_fraction
@@ -362,3 +396,120 @@ def tax_loss_harvest(returns: dict, rate: float = 0.15) -> dict:
             "note": ("Sell losers + trim paired winners to offset gains. "
                      "Simplified — watch wash-sale rules. Not tax advice.") if pairs
             else "No losing holdings — nothing to harvest."}
+
+
+def risk_metrics(returns: dict) -> dict:
+    """Risk-adjusted snapshot: volatility, Sharpe-like proxy, win rate, contributors.
+
+    Volatility = population std-dev of per-holding returns (%). Sharpe proxy =
+    total return % / volatility (risk-free assumed 0). Single-period proxies —
+    educational, not fund-grade statistics.
+    """
+    import statistics
+    holdings = returns.get("holdings", [])
+    pcts = [h["pnl_pct"] for h in holdings]
+    vol = round(statistics.pstdev(pcts), 2) if len(pcts) > 1 else 0.0
+    total_ret = returns.get("totals", {}).get("return_pct", 0.0)
+    sharpe = round(total_ret / vol, 2) if vol else 0.0
+    wins = [h for h in holdings if h["pnl"] > 0]
+    losses = [h for h in holdings if h["pnl"] < 0]
+    best = max(holdings, key=lambda h: h["pnl"], default=None)
+    worst = min(holdings, key=lambda h: h["pnl"], default=None)
+    return {
+        "volatility_pct": vol,
+        "sharpe_proxy": sharpe,
+        "win_rate_pct": round(len(wins) / len(holdings) * 100, 1) if holdings else 0.0,
+        "avg_win": round(sum(h["pnl"] for h in wins) / len(wins), 2) if wins else 0.0,
+        "avg_loss": round(sum(h["pnl"] for h in losses) / len(losses), 2) if losses else 0.0,
+        "best_contributor": best["ticker"] if best else None,
+        "worst_contributor": worst["ticker"] if worst else None,
+        "note": ("Higher Sharpe proxy = more return per unit of wobble. "
+                 "Single-period estimate — compare portfolios with it, don't worship it."),
+    }
+
+
+def build_alerts(returns: dict, allocation: dict, risk: dict) -> list[dict]:
+    """Threshold alert center: critical / warn / ok signals a beginner can act on."""
+    alerts: list[dict] = []
+
+    def add(severity: str, text: str):
+        alerts.append({"severity": severity, "text": text})
+
+    top_pct = allocation.get("top_sector_pct", 0) or 0
+    if top_pct >= 50:
+        add("critical", f"{allocation.get('top_sector')} is {top_pct}% — over the 50% danger line.")
+    elif top_pct >= 30:
+        add("warn", f"{allocation.get('top_sector')} is {top_pct}% — over the 30% watch line.")
+    hold_pct = allocation.get("top_holding_pct", 0) or 0
+    if hold_pct >= 20:
+        add("warn" if hold_pct < 25 else "critical",
+            f"{allocation.get('top_holding')} alone is {hold_pct}% of your money.")
+    for h in returns.get("holdings", []):
+        if h["pnl_pct"] <= -20:
+            add("critical", f"{h['ticker']} is down {h['pnl_pct']}% — review urgently.")
+        elif h["pnl_pct"] <= -10:
+            add("warn", f"{h['ticker']} is down {h['pnl_pct']}% — check the story.")
+    if (allocation.get("hhi", 0) or 0) >= 2500:
+        add("warn", f"Diversification weak (HHI {allocation['hhi']}).")
+    n_losers = sum(1 for h in returns.get("holdings", []) if h["pnl"] < 0)
+    if n_losers == 0 and returns.get("holdings"):
+        add("ok", "Every holding is green — consider booking partial profit on the top winner.")
+    elif not alerts:
+        add("ok", "No threshold breaches. Portfolio looks balanced.")
+    order = {"critical": 0, "warn": 1, "ok": 2}
+    return sorted(alerts, key=lambda a: order[a["severity"]])
+
+
+def build_insights(returns: dict, allocation: dict, risk: dict,
+                   harvest: dict | None = None, plan: dict | None = None) -> list[dict]:
+    """Insight Agent's raw material: up to 5 plain-English briefs, most urgent first.
+
+    Each item: {"tone": "bad"|"warn"|"good", "title": ..., "body": ...}.
+    Deterministic — the same portfolio always yields the same brief.
+    """
+    t = returns.get("totals", {})
+    holdings = returns.get("holdings", [])
+    insights: list[dict] = []
+
+    top_pct = allocation.get("top_sector_pct", 0) or 0
+    if top_pct >= 30:
+        insights.append({
+            "tone": "bad" if top_pct >= 50 else "warn",
+            "title": f"{allocation.get('top_sector')} runs the show at {top_pct}%",
+            "body": (f"Over half your money moves with one sector. "
+                     f"A 20% dip there would cost ~{round(t.get('total_value', 0) * top_pct / 100 * 0.2, 2)}."),
+        })
+    if holdings:
+        best = max(holdings, key=lambda h: h["pnl"])
+        worst = min(holdings, key=lambda h: h["pnl"])
+        n, w = len(holdings), sum(1 for h in holdings if h["pnl"] > 0)
+        insights.append({
+            "tone": "good" if best["pnl"] > 0 else "warn",
+            "title": f"{best['ticker']} earned you {best['pnl']:+}; {worst['ticker']} cost {worst['pnl']:+}",
+            "body": f"{w} of {n} holdings are green. Know your winners — and what your worst one is teaching you.",
+        })
+    harvest = harvest or {}
+    if harvest.get("pairs"):
+        insights.append({
+            "tone": "good",
+            "title": f"{len(harvest['pairs'])} loser(s) can save ~{harvest.get('total_tax_saved', 0)} in tax",
+            "body": "Selling losers alongside trimmed winners offsets gains. Check the harvest panel for exact pairs.",
+        })
+    plan = plan or {}
+    if plan.get("sells"):
+        insights.append({
+            "tone": "warn",
+            "title": f"One trim frees ~{plan.get('freed_total', 0)}",
+            "body": ("Trimming the overweight sector back to "
+                     f"{plan.get('cap_pct', 35)}% funds every underweight sector at once."),
+        })
+    if t.get("return_pct", 0) > 0 and not any(i["tone"] == "bad" for i in insights):
+        insights.append({
+            "tone": "good",
+            "title": f"Up {t.get('return_pct', 0)}% overall — protect it",
+            "body": "Gains are made; the job now is keeping them. A phased rebalance beats a rushed exit.",
+        })
+    if not insights:
+        insights.append({"tone": "good", "title": "Steady as she goes",
+                         "body": "No concentration, no heavy losers. Review quarterly."})
+    return insights[:5]

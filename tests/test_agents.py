@@ -35,11 +35,14 @@ def test_analyst_facts_only():
 
 def test_risk_bundle_keys():
     _, _, risks = _bundle()
-    for key in ("risk", "tax", "health", "plan", "projection", "stress", "harvest", "goal"):
+    for key in ("risk", "tax", "health", "plan", "projection", "stress", "harvest", "goal",
+                "metrics", "alerts", "insights"):
         assert key in risks, f"missing {key}"
     assert risks["stress"]["sector"] == "Technology"
     assert len(risks["harvest"]["pairs"]) == 3
     assert 1200 < risks["goal"]["monthly_sip"] < 1400
+    assert risks["metrics"]["win_rate_pct"] == 70.0
+    assert any(a["severity"] == "critical" for a in risks["alerts"])
 
 
 def test_fallback_advice_mentions_key_facts():
@@ -47,6 +50,17 @@ def test_fallback_advice_mentions_key_facts():
     advice = advisor_agent(findings, risks)
     for needle in ("27110.7", "Technology", "53.71", "Health score"):
         assert needle in advice, f"missing {needle!r} in:\n{advice}"
+
+
+def test_tax_agent():
+    from agents import tax_agent
+    df, findings, risks = _bundle()
+    out = tax_agent(df, findings)
+    assert set(out) == {"tax", "harvest"}, out.keys()
+    assert out["tax"]["total_est_tax"] == 429.65, out["tax"]
+    assert len(out["harvest"]["pairs"]) == 3, out["harvest"]
+    assert out["harvest"]["total_tax_saved"] == risks["harvest"]["total_tax_saved"]
+    assert out["tax"] == risks["tax"]  # bundle is sourced from the agent
 
 
 def test_qa_branches():
@@ -60,6 +74,9 @@ def test_qa_branches():
         "why is my risk high?": "53.71",
         "tax?": "429.65",
         "worst loser?": "CLDW",
+        "any alerts?": "CRITICAL",
+        "give me the brief": "Today's brief",
+        "sharpe ratio?": "Volatility",
         "hello": "27110.7",
     }
     for q, needle in cases.items():
@@ -70,6 +87,7 @@ def test_qa_branches():
 if __name__ == "__main__":
     test_analyst_facts_only()
     test_risk_bundle_keys()
+    test_tax_agent()
     test_fallback_advice_mentions_key_facts()
     test_qa_branches()
     print("All agent tests passed.")

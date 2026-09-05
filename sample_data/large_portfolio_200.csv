@@ -1,0 +1,201 @@
+ticker,company_name,sector,quantity,buy_price,current_price
+XZTC,StreamCom Com,Communication,18,375.94,407.21
+HSVA,LuxFashion Motors,Consumer Discretionary,32,34.3,40.43
+AFYP,BasicGoods Stores,Consumer Staples,116,221.37,208.53
+LDCN,HydroRenewables Power,Energy,102,123.35,138.84
+DNCT,FinPartners Partners,Financials,73,309.79,366.26
+CBXH,BioBiotech Sciences,Healthcare,95,297.13,239.9
+MFMM,HeavyIndustries Works,Industrials,111,435.91,407.87
+TZHF,ShieldLife Insurance,Insurance,26,312.38,379.64
+LBHB,GlassPackaging Materials,Materials,92,494.97,462.1
+YLGW,MetroDevelopers Realty,Real Estate,77,51.77,46.75
+TJZU,LogicDynamics Devices,Technology,76,240.25,256.43
+SRCB,VoltNetworks Energy,Utilities,22,193.76,235.39
+VQSJ,TeleMedia Media,Communication,53,400.2,409.18
+JWLD,LuxMotors Motors,Consumer Discretionary,73,347.22,385.64
+SFSD,HomeBrands Goods,Consumer Staples,38,237.79,340.59
+MFTS,ThermoRenewables Utilities,Energy,24,312.31,304.44
+KHBH,FinFinancial Partners,Financials,111,254.53,308.09
+CTEE,CarePharma Pharma,Healthcare,109,371.32,442.06
+TZYG,IndusCorp Tools,Industrials,32,99.26,83.16
+MQSQ,SecureLife General,Insurance,88,497.67,516.31
+HACY,ChemMining Mining,Materials,80,50.73,66.29
+LCSH,PropProperties Estates,Real Estate,9,52.35,58.12
+URHR,QuantumDevices Dynamics,Technology,78,122.83,167.54
+MPPQ,VoltUtility Grid,Utilities,60,66.53,92.57
+HGGT,StreamCom Com,Communication,18,49.09,50.85
+HCQT,FunRetail Fashion,Consumer Discretionary,64,108.07,82.11
+HFPR,FreshFoods Stores,Consumer Staples,113,421.29,624.93
+NANJ,PetroPower Oil,Energy,26,453.17,453.36
+XYRE,UnionSecurities Partners,Financials,76,223.04,367.95
+ZTBZ,MediSciences Labs,Healthcare,79,484.98,447.85
+BSCF,HeavyIndustries Industries,Industrials,25,300.41,218.62
+NDUH,SafeRe Insurance,Insurance,35,344.1,369.46
+LJGX,MetalFilms Chemicals,Materials,71,317.3,276.6
+XWKQ,PropRealty Estates,Real Estate,21,147.49,176.37
+TGSJ,NanoSystems Systems,Technology,14,239.98,403.03
+KFQT,WaterServices Grid,Utilities,52,442.05,474.84
+TKXD,StreamNetworks Digital,Communication,90,492.25,569.8
+TEJK,StyleLeisure Motors,Consumer Discretionary,100,447.06,390.37
+JBCW,BasicGoods Essentials,Consumer Staples,67,117.73,116.12
+EWJF,PetroRenewables Energy,Energy,103,21.7,21.15
+YETB,WealthSecurities Financial,Financials,118,358.72,358.24
+EBKM,GenSciences Biotech,Healthcare,60,285.21,298.69
+PVZE,BuildSystems Works,Industrials,76,347.39,346.06
+FZLP,ShieldAssurance Assurance,Insurance,8,443.08,413.93
+RHGQ,PolyMining Materials,Materials,9,96.41,98.99
+GNLJ,MetroRealty Estates,Real Estate,89,127.0,115.76
+LADJ,CloudWorks Works,Technology,73,327.91,219.77
+PMZL,WaterNetworks Services,Utilities,81,38.36,52.9
+YPAS,BroadDigital Digital,Communication,10,75.51,88.67
+LVLX,LuxRetail Leisure,Consumer Discretionary,90,227.02,229.52
+TEGP,FreshEssentials Stores,Consumer Staples,42,168.46,156.13
+NTAK,GridOil Power,Energy,43,315.45,372.05
+QXGS,TrustHoldings Securities,Financials,61,397.16,379.52
+WVLC,PharmaLabs Pharma,Healthcare,89,156.22,153.31
+VCQP,SteelSystems Works,Industrials,65,407.15,453.27
+RNHE,SecureRe Assurance,Insurance,54,364.81,410.14
+SQBT,PolyChemicals Chemicals,Materials,94,393.64,450.02
+XSTV,PrimeProperties Developers,Real Estate,64,84.0,117.5
+QFZR,NanoDynamics Innovations,Technology,75,411.2,504.88
+SRWH,VoltServices Utility,Utilities,40,423.13,406.56
+TCEE,NetBroadcast Com,Communication,119,362.5,397.24
+PPLT,StyleFashion Retail,Consumer Discretionary,13,359.08,446.0
+YAUN,PureBrands Foods,Consumer Staples,79,119.28,87.99
+PTZZ,PetroEnergy Renewables,Energy,54,163.33,207.07
+LXXN,MoneyFinancial Holdings,Financials,54,254.35,267.12
+TANU,LifeLabs Health,Healthcare,84,461.38,593.06
+JNLG,ForgeIndustries Industries,Industrials,11,328.52,398.11
+JPJC,AssureLife Life,Insurance,53,385.39,474.36
+WBAH,GlassChemicals Films,Materials,13,45.0,54.11
+RXDU,PrimeProperties Homes,Real Estate,21,93.14,97.04
+YDFK,CyberDynamics Devices,Technology,100,143.0,130.57
+XNNY,PowerNetworks Grid,Utilities,78,465.87,587.1
+KXVD,MediaCom Digital,Communication,103,351.49,359.16
+MCSW,LuxMotors Leisure,Consumer Discretionary,89,275.72,281.28
+QYEP,HomeFoods Brands,Consumer Staples,86,414.72,597.62
+RQPZ,SolarUtilities Renewables,Energy,73,315.64,429.9
+QHQU,MoneyPartners Partners,Financials,117,428.82,479.09
+LFRG,CareHealth Sciences,Healthcare,113,33.78,34.22
+ASGC,HeavySystems Systems,Industrials,76,154.24,119.52
+YRWY,ShieldGeneral General,Insurance,35,286.48,249.06
+XUMR,GlassPackaging Chemicals,Materials,44,64.67,73.01
+TLMY,SkyHomes Realty,Real Estate,100,224.24,303.12
+ZTYF,LogicWorks Works,Technology,20,140.67,163.95
+SVKD,WaterUtility Energy,Utilities,80,152.72,177.3
+JBBT,MediaNetworks Media,Communication,21,193.22,191.08
+UKRR,TravelRetail Fashion,Consumer Discretionary,6,69.24,93.29
+CNRC,PureEssentials Goods,Consumer Staples,19,483.44,519.42
+KCHD,WindEnergy Power,Energy,77,91.61,131.74
+QQKU,MoneySecurities Financial,Financials,53,306.14,260.53
+ZDGW,PharmaSciences Biotech,Healthcare,83,318.09,276.49
+PQYV,SteelSystems Industries,Industrials,5,95.39,106.15
+KYQC,AssureLife Insurance,Insurance,95,131.11,149.87
+PDTH,PolyMining Materials,Materials,30,398.16,355.48
+BFKV,PropEstates Realty,Real Estate,14,416.78,372.05
+STRQ,QuantumDynamics Systems,Technology,39,244.98,249.66
+LVJA,PowerNetworks Grid,Utilities,99,446.92,559.65
+JUBF,TeleMedia Digital,Communication,110,301.82,417.61
+UPWR,FunNext Fashion,Consumer Discretionary,28,459.71,514.78
+LPYR,FreshBrands Essentials,Consumer Staples,25,216.01,225.4
+LJLD,HydroOil Utilities,Energy,16,37.61,43.49
+PBGS,UnionSecurities Financial,Financials,64,415.97,600.31
+BGJT,BioBiotech Health,Healthcare,102,320.2,346.66
+VHYF,SteelSystems Corp,Industrials,85,442.81,459.03
+HDQD,GuardRe Insurance,Insurance,16,285.08,309.08
+RRHQ,PolyMining Packaging,Materials,58,467.67,470.86
+SZEC,SkyEstates Developers,Real Estate,81,111.49,150.71
+ZKUU,QuantumDynamics Works,Technology,41,468.44,349.81
+MLTT,AquaEnergy Utility,Utilities,66,234.34,249.29
+HPBL,BroadBroadcast Networks,Communication,54,437.41,530.14
+WERB,SportFashion Fashion,Consumer Discretionary,89,205.32,218.46
+SQAZ,DailyStores Stores,Consumer Staples,17,179.36,244.06
+JLVY,SolarOil Power,Energy,105,55.92,71.85
+WYRT,CreditBank Partners,Financials,45,429.12,511.35
+KHZC,HealthBiotech Pharma,Healthcare,92,132.69,125.25
+LBKM,MachineIndustries Industries,Industrials,10,232.97,220.36
+UXFF,GuardGeneral Assurance,Insurance,57,137.21,98.06
+EHQW,MineChemicals Films,Materials,79,438.0,430.3
+QKXT,MetroDevelopers Realty,Real Estate,120,340.08,336.24
+YJQK,DataSystems Dynamics,Technology,59,473.71,583.29
+UMUK,WaterEnergy Energy,Utilities,53,71.19,76.05
+XZBV,StreamNetworks Com,Communication,77,489.41,490.09
+VMHW,SportFashion Leisure,Consumer Discretionary,34,392.36,376.32
+EWDW,DailyStores Essentials,Consumer Staples,112,345.33,356.39
+UMZE,GridEnergy Renewables,Energy,9,398.53,326.91
+MSSJ,FinPartners Partners,Financials,74,378.79,425.44
+KZLD,GenLabs Sciences,Healthcare,66,458.74,534.69
+NTMC,MachineIndustries Works,Industrials,91,381.99,428.31
+MXZX,AssureInsurance Life,Insurance,63,277.55,373.91
+RAVT,PaperFilms Packaging,Materials,34,414.76,481.21
+QYKW,MetroHomes Estates,Real Estate,86,330.87,346.89
+DHTE,PixelSystems Labs,Technology,19,41.77,69.38
+YTPU,VoltEnergy Services,Utilities,100,341.83,416.47
+BYMG,StreamMedia Broadcast,Communication,40,334.36,402.89
+XMTW,FunFashion Retail,Consumer Discretionary,17,430.62,372.36
+QCXG,HomeFoods Brands,Consumer Staples,110,152.42,230.22
+HEUG,GridUtilities Energy,Energy,47,44.28,43.96
+EVAJ,FinFinancial Holdings,Financials,104,301.46,340.83
+FDXA,GenLabs Labs,Healthcare,107,279.3,267.86
+JBEZ,SteelIndustries Systems,Industrials,27,399.19,435.94
+QMSU,AssureRe Insurance,Insurance,65,377.92,468.15
+XSKQ,ChemPackaging Films,Materials,115,126.34,108.97
+NPXD,PropProperties Properties,Real Estate,113,499.32,443.38
+EJVW,LogicDevices Dynamics,Technology,13,55.28,71.61
+SKQS,CurrentNetworks Services,Utilities,81,202.83,243.35
+TZGP,SignalBroadcast Com,Communication,117,400.69,511.9
+NPZD,FunRetail Fashion,Consumer Discretionary,63,182.69,228.89
+CCCC,HomeBrands Essentials,Consumer Staples,65,339.25,341.65
+BUTT,PetroEnergy Renewables,Energy,76,409.65,472.56
+ZBKV,TrustBank Securities,Financials,116,189.73,176.05
+EXRH,BioSciences Pharma,Healthcare,32,297.4,244.34
+PTVV,BuildSystems Tools,Industrials,108,196.43,215.8
+YJAF,SecureRe Insurance,Insurance,89,312.32,264.08
+NCEZ,PaperMaterials Materials,Materials,89,188.49,211.45
+NPQL,PropProperties Properties,Real Estate,32,378.13,442.77
+BEFV,DataWorks Works,Technology,15,366.37,410.01
+RVQP,PowerGrid Services,Utilities,59,232.69,197.84
+URSX,NetMedia Digital,Communication,91,74.63,70.68
+BAGK,TravelMotors Retail,Consumer Discretionary,81,209.73,239.64
+FENT,DailyGoods Essentials,Consumer Staples,60,158.93,196.11
+MCNZ,GridPower Utilities,Energy,90,288.19,352.89
+UNYW,FinSecurities Bank,Financials,59,240.68,293.07
+FVQY,PharmaSciences Pharma,Healthcare,46,214.42,247.29
+CNKZ,HeavyIndustries Corp,Industrials,72,425.35,463.66
+SWDS,GuardAssurance Life,Insurance,14,393.98,519.97
+HDEJ,MetalMining Materials,Materials,23,188.53,250.81
+WCFW,PrimeEstates Homes,Real Estate,102,93.38,94.57
+WWVL,LogicDynamics Innovations,Technology,77,384.74,266.27
+QWKJ,AquaServices Utility,Utilities,65,231.09,279.39
+MKCW,SignalCom Networks,Communication,12,263.52,265.33
+UTZB,AutoNext Next,Consumer Discretionary,64,263.39,332.75
+QDLY,PureStores Goods,Consumer Staples,12,174.33,170.54
+QQSS,EnerUtilities Power,Energy,95,38.79,42.5
+XVBW,MoneyHoldings Partners,Financials,48,198.97,207.35
+XNKJ,LifeSciences Pharma,Healthcare,76,178.25,224.7
+KWYX,IndusTools Works,Industrials,49,180.01,178.88
+KTNW,AssureAssurance Re,Insurance,15,360.24,371.27
+MKFG,PaperMining Films,Materials,7,64.86,63.38
+ECKD,MetroDevelopers Estates,Real Estate,22,128.74,114.8
+FFYV,TechDevices Works,Technology,24,440.67,397.04
+ZHQV,WaterEnergy Grid,Utilities,91,217.21,198.97
+GMXU,NetBroadcast Media,Communication,65,276.33,265.42
+SPFG,FunFashion Leisure,Consumer Discretionary,69,393.5,544.9
+YSDK,BasicGoods Essentials,Consumer Staples,18,45.05,40.9
+EPCH,EnerPower Renewables,Energy,70,235.67,259.49
+HNCM,UnionSecurities Partners,Financials,52,466.63,431.34
+YWLE,MediPharma Sciences,Healthcare,112,466.8,547.17
+YRQV,SteelIndustries Systems,Industrials,102,460.35,343.23
+ETZV,SafeInsurance Insurance,Insurance,111,142.84,162.62
+PWVQ,MetalPackaging Chemicals,Materials,35,392.56,426.76
+WSUH,UrbanProperties Developers,Real Estate,7,306.43,358.98
+XXCS,DataWorks Dynamics,Technology,28,20.75,19.49
+STAN,GasGrid Networks,Utilities,105,281.16,356.2
+CMHZ,BroadCom Broadcast,Communication,105,490.9,529.81
+EBMT,SportMotors Next,Consumer Discretionary,47,372.89,414.86
+CYQB,HomeGoods Brands,Consumer Staples,22,490.79,474.52
+BLKS,HydroPower Energy,Energy,118,399.73,437.85
+BWLJ,CreditFinancial Securities,Financials,50,141.59,153.26
+QNLF,HealthSciences Health,Healthcare,100,446.95,430.32
+PCPV,MachineCorp Systems,Industrials,98,463.67,351.86
+LXKK,ShieldRe Life,Insurance,15,174.18,181.31

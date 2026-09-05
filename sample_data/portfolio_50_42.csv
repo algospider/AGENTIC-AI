@@ -1,0 +1,51 @@
+ticker,company_name,sector,quantity,buy_price,current_price
+BRK.B,Berkshire Hathaway Inc,Financials,50,62.27,39.97
+JPM,JPMorgan Chase & Co,Financials,28,163.57,115.1
+PFE,Pfizer Inc,Healthcare,18,252.57,211.39
+AMZN,Amazon.com Inc,Technology,27,498.06,359.42
+META,Meta Platforms Inc,Technology,19,148.4,85.51
+MPC,Marathon Petroleum Corp,Energy,6,76.82,50.74
+GS,Goldman Sachs Group Inc,Financials,11,99.52,78.81
+AVGO,Broadcom Inc,Technology,133,185.69,131.58
+TJX,TJX Cos Inc,Consumer Discretionary,55,220.71,145.54
+CRM,Salesforce Inc,Technology,27,138.77,84.83
+MAR,Marriott International Inc,Consumer Discretionary,27,307.89,132.67
+GILD,Gilead Sciences Inc,Healthcare,15,355.74,318.56
+INTC,Intel Corp,Technology,18,268.75,167.74
+AMD,AMD Inc,Technology,58,320.13,232.31
+CSX,CSX Corp,Industrials,28,186.84,110.49
+NSC,Norfolk Southern Corp,Industrials,7,163.37,135.49
+INTU,Intuit Inc,Technology,43,282.0,150.97
+ICE,Intercontinental Exchange Inc,Financials,41,80.25,77.28
+DISH,DISH Network Corp,Communication Services,34,67.15,43.07
+LRCX,Lam Research Corp,Technology,16,162.97,84.17
+PG,Procter & Gamble Co,Consumer Staples,21,173.06,112.0
+UNH,UnitedHealth Group Inc,Healthcare,46,364.89,280.58
+HD,Home Depot Inc,Consumer Discretionary,53,202.54,146.44
+EQIX,Equinix Inc,Real Estate,18,80.64,68.92
+GE,General Electric Co,Industrials,11,227.77,154.34
+LOW,Lowe's Cos Inc,Consumer Discretionary,15,84.66,22.61
+GS2,Goldman Sachs Group Inc,Financials,26,108.95,93.38
+ABBV,AbbVie Inc,Healthcare,61,346.8,296.09
+LLY,Eli Lilly and Co,Healthcare,9,292.28,210.76
+KMB,Kimberly-Clark Corp,Consumer Staples,48,111.75,79.04
+DVN,Devon Energy Corp,Energy,28,141.48,88.97
+ATVI,Activision Blizzard Inc,Communication Services,28,303.83,253.58
+F,Ford Motor Co,Consumer Discretionary,42,61.21,26.05
+CLX,Clorox Co The,Consumer Staples,29,200.83,146.86
+QCOM,Qualcomm Inc,Technology,112,130.1,96.51
+CF,CF Industries Holdings Inc,Materials,19,216.92,133.99
+NI,NiSource Inc,Utilities,66,73.91,61.79
+AMAT,Applied Materials Inc,Technology,23,199.81,117.92
+CME,CME Group Inc,Financials,59,80.18,49.94
+SIRI,Sirius XM Holdings Inc,Communication Services,4,286.21,187.18
+AAPL,Apple Inc,Technology,55,284.12,123.1
+META2,Meta Platforms Inc,Communication Services,5,57.1,41.9
+GOOGL,Alphabet Inc,Technology,45,486.76,281.74
+AMZN2,Amazon.com Inc,Technology,78,492.46,419.79
+META3,Meta Platforms Inc,Technology,52,143.36,87.75
+NVDA,NVIDIA Corp,Technology,22,342.48,254.23
+MRK,Merck & Co Inc,Healthcare,39,161.51,101.86
+AVGO2,Broadcom Inc,Technology,27,396.78,223.69
+ORCL,Oracle Corp,Technology,6,365.7,225.71
+MMM,3M Co,Industrials,21,238.35,191.74

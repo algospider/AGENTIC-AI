@@ -12,10 +12,10 @@ console = Console()
 GREEN, RED = "green", "red"
 
 
-def banner() -> None:
+def banner(subtitle: str = "Analyst -> Risk -> Advisor pipeline") -> None:
     console.print(Panel(
         Text("Portfolio Health Advisor", justify="center", style="bold cyan"),
-        subtitle="Analyst -> Risk -> Advisor pipeline",
+        subtitle=subtitle,
         border_style="cyan"))
 
 
@@ -96,6 +96,15 @@ def show_stress(stress: dict) -> None:
     console.print(Panel(stress.get("note", ""), title="Stress Check", border_style="yellow"))
 
 
+def show_insights(insights: list) -> None:
+    if not insights:
+        return
+    style = {"bad": "red", "warn": "yellow", "good": "green"}
+    rows = "\n".join(f"• [{style.get(i.get('tone'), 'white')}]{i['title']}[/] — {i['body']}"
+                     for i in insights)
+    console.print(Panel(rows, title="Today's Brief", border_style="cyan"))
+
+
 def show_plan(plan: dict) -> None:
     if not plan.get("sells"):
         console.print(Panel(plan.get("note", "No rebalancing needed."),
@@ -135,10 +144,18 @@ def show_advice(advice: str) -> None:
 
 def show_dashboard(findings, risks, advice) -> None:
     """One-screen overview: the default view for beginners."""
+    from rich.rule import Rule
     banner()
     show_health(risks.get("health", {}))
+    console.print(Rule(style="dim"))
     show_holdings(findings["returns"])
+    console.print(Rule(style="dim"))
     console.print(Columns([_alloc_renderable(findings["allocation"]), _risk_renderable(risks)]))
+    console.print(Rule(style="dim"))
+    show_risk_tax(risks)
+    console.print(Rule(style="dim"))
+    show_insights(risks.get("insights", []))
+    console.print(Rule(style="dim"))
     show_advice(advice)
 
 
@@ -156,9 +173,11 @@ def _risk_renderable(risks: dict) -> Panel:
 
 def main_menu() -> str:
     console.print("\n[bold]What next?[/bold]")
-    console.print("  1) Dashboard  2) Rebalance plan  3) Growth projection")
-    console.print("  4) What-if simulator  5) Ask a question  6) Export report  7) Exit")
-    return Prompt.ask("Choose", choices=["1", "2", "3", "4", "5", "6", "7"], default="7")
+    console.print("  1) Dashboard (everything)  2) Rebalance plan  3) Growth + SIP")
+    console.print("  4) What-if + stress lab    5) Ask a question  6) Export report")
+    console.print("  7) Datasets & compare      8) Exit")
+    console.print("[dim]Tip: run without --menu for the full-screen mouse + keyboard UI.[/dim]")
+    return Prompt.ask("Choose", choices=["1", "2", "3", "4", "5", "6", "7", "8"], default="8")
 
 
 def what_if_flow(portfolio, simulate_fn, tickers: list[str], stress_fn=None) -> None:
@@ -214,3 +233,75 @@ def qa_flow(findings, risk_data, qa_fn) -> None:
             a = qa_fn(findings, q, history, risk_data)
         console.print(Panel(a, title="Advisor", border_style="blue"))
         history += [{"role": "user", "content": q}, {"role": "assistant", "content": a}]
+
+
+def show_compare(res: dict) -> None:
+    sa, sb = res["a"], res["b"]
+    t = Table(title=f"{sa['file']}  vs  {sb['file']}")
+    t.add_column("Metric", justify="left")
+    t.add_column(sa["file"][:22], justify="right")
+    t.add_column(sb["file"][:22], justify="right")
+    for k in ("n", "value", "return_pct", "health", "risk", "top_sector_pct",
+              "winners", "losers"):
+        t.add_row(k, str(sa[k]), str(sb[k]))
+    console.print(t)
+    console.print(Panel("\n".join(f"▸ {v}" for v in res["verdicts"]),
+                        title="Verdict", border_style="cyan"))
+
+
+def datasets_flow(current_path: str, datasets: list[dict], load_fn, compare_fn) -> dict | None:
+    """Browse, load, import and compare datasets. Returns fresh state dict or None."""
+    while True:
+        t = Table(title="Datasets & Compare")
+        t.add_column("#", justify="right")
+        t.add_column("File", justify="left")
+        t.add_column("Holdings", justify="right")
+        t.add_column("Value", justify="right")
+        t.add_column("Return", justify="right")
+        t.add_column("Health", justify="right")
+        t.add_column("Risk", justify="left")
+        for i, d in enumerate(datasets, 1):
+            mark = "▶ " if d.get("path") == current_path else "  "
+            if "error" in d:
+                t.add_row(str(i), mark + d["name"], "-", "-", "-", "-", "unreadable")
+            else:
+                t.add_row(str(i), mark + d["name"], str(d["n"]), f"{d['value']:,.0f}",
+                          f"{d['return_pct']:+.1f}%", f"{d['health']}/100({d['grade']})", d["risk"])
+        console.print(t)
+        console.print("[dim]<number> load · C compare two · P import own CSV path · B back[/dim]")
+        choice = Prompt.ask("Datasets", default="B").strip()
+        if choice.upper() == "B" or not choice:
+            return None
+        if choice.upper() == "P":
+            raw = Prompt.ask("Path to your CSV").strip()
+            if not raw:
+                continue
+            return _load_state(raw, load_fn)
+        if choice.upper() == "C":
+            try:
+                ia = int(Prompt.ask("First dataset #")) - 1
+                ib = int(Prompt.ask("Second dataset #")) - 1
+                show_compare(compare_fn(datasets[ia]["path"], datasets[ib]["path"]))
+            except (ValueError, IndexError, KeyError) as e:
+                console.print(f"[red]Compare failed: {e}[/red]")
+            continue
+        try:
+            return _load_state(datasets[int(choice) - 1]["path"], load_fn)
+        except (ValueError, IndexError, KeyError):
+            console.print("[red]Pick a number from the list, C, P or B.[/red]")
+
+
+def _load_state(path: str, load_fn) -> dict | None:
+    try:
+        with console.status(f"Loading {path}..."):
+            portfolio, findings, risks, advice = load_fn(path)
+    except SystemExit as e:
+        console.print(f"[red]{e}[/red]")
+        return None
+    except Exception as e:
+        console.print(f"[red]Load failed: {e}[/red]")
+        return None
+    console.print(f"[green]Loaded {path} — {len(findings['returns']['holdings'])} holdings.[/green]")
+    return {"path": path, "portfolio": portfolio, "findings": findings,
+            "risks": risks, "advice": advice,
+            "tickers": [h["ticker"] for h in findings["returns"]["holdings"]]}

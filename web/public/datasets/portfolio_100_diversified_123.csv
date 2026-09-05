@@ -1,0 +1,101 @@
+ticker,company_name,sector,quantity,buy_price,current_price
+PG,Procter & Gamble Co,Consumer Staples,17,72.88,92.33
+MSFT,Microsoft Corp,Technology,62,144.38,244.16
+HD,Home Depot Inc,Consumer Discretionary,19,181.2,246.44
+MA,Mastercard Inc,Financials,53,102.74,141.19
+COST,Costco Wholesale Corp,Consumer Staples,29,67.95,92.99
+EXC,Exelon Corp,Utilities,123,60.45,75.78
+TSLA,Tesla Inc,Technology,26,184.8,323.85
+TMUS,T-Mobile US Inc,Communication Services,49,117.48,187.84
+TJX,TJX Cos Inc,Consumer Discretionary,123,250.57,405.45
+MMM,3M Co,Industrials,12,89.37,149.27
+ADBE,Adobe Inc,Technology,22,444.86,661.14
+GM,General Motors Co,Consumer Discretionary,206,378.45,525.43
+INTC,Intel Corp,Technology,12,337.13,513.78
+AMD,AMD Inc,Technology,51,440.54,701.46
+QCOM,Qualcomm Inc,Technology,13,112.92,175.59
+AON,Aon plc,Financials,13,211.94,364.56
+INTU,Intuit Inc,Technology,17,136.11,230.02
+ICE,Intercontinental Exchange Inc,Financials,12,214.61,295.94
+MU,Micron Technology Inc,Technology,23,260.28,455.21
+LRCX,Lam Research Corp,Technology,61,417.05,631.15
+AAPL,Apple Inc,Technology,18,443.84,739.78
+KO,Coca-Cola Co The,Consumer Staples,102,247.04,338.93
+CCI,Crown Castle Inc,Real Estate,17,181.52,231.79
+AMZN,Amazon.com Inc,Technology,90,101.31,163.91
+CMCSA,Comcast Corp,Communication Services,43,73.97,92.98
+VZ,Verizon Communications Inc,Communication Services,50,81.39,131.74
+GS,Goldman Sachs Group Inc,Financials,17,205.08,367.81
+AVGO,Broadcom Inc,Technology,125,411.21,710.37
+C,Citigroup Inc,Financials,60,274.24,422.81
+BMY,Bristol-Myers Squibb Co,Healthcare,40,112.26,129.72
+AMGN,Amgen Inc,Healthcare,14,365.68,504.84
+FANG,Diamondback Energy Inc,Energy,46,60.81,96.91
+HSY,Hershey Co The,Consumer Staples,228,165.21,246.95
+PH,Parker-Hannifin Corp,Industrials,73,152.55,200.82
+QCOM2,Qualcomm Inc,Technology,22,363.18,658.05
+TXN,Texas Instruments Inc,Technology,18,145.3,244.18
+MMC,Marsh & McLennan Cos,Financials,18,253.27,395.05
+GD,General Dynamics Corp,Industrials,23,116.99,180.74
+CMG,Chipotle Mexican Grill Inc,Consumer Discretionary,17,276.96,388.02
+NRG,NRG Energy Inc,Utilities,26,105.72,133.98
+AAPL2,Apple Inc,Technology,99,158.11,252.87
+UNH,UnitedHealth Group Inc,Healthcare,7,239.2,319.93
+PFE,Pfizer Inc,Healthcare,7,255.96,362.99
+AMZN2,Amazon.com Inc,Technology,71,175.93,235.18
+CMCSA2,Comcast Corp,Communication Services,35,210.44,282.39
+RTX,RTX Corp,Industrials,8,86.87,123.5
+SBUX,Starbucks Corp,Consumer Discretionary,129,93.53,154.44
+TGT,Target Corp,Consumer Discretionary,42,173.48,257.44
+CHTR,Charter Communications Inc,Communication Services,53,63.05,101.37
+BMY2,Bristol-Myers Squibb Co,Healthcare,24,305.9,397.53
+TTWO,Take-Two Interactive Software Inc,Communication Services,13,128.96,185.69
+GM2,General Motors Co,Consumer Discretionary,128,284.68,411.4
+SCHW,Charles Schwab Corp,Financials,152,77.45,105.53
+CI,Cigna Group The,Healthcare,90,225.29,329.15
+QCOM3,Qualcomm Inc,Technology,73,291.76,454.82
+TXN2,Texas Instruments Inc,Technology,37,359.16,605.48
+MMC2,Marsh & McLennan Cos,Financials,25,192.49,283.53
+AZO,AutoZone Inc,Consumer Discretionary,32,187.46,313.39
+CME,CME Group Inc,Financials,6,149.56,226.77
+YUM,Yum! Brands Inc,Consumer Discretionary,124,84.76,125.69
+GOOGL,Alphabet Inc,Communication Services,31,263.84,354.43
+MSFT2,Microsoft Corp,Technology,34,192.69,389.79
+PFE2,Pfizer Inc,Healthcare,10,380.09,567.91
+CAT,Caterpillar Inc,Industrials,21,247.95,409.81
+TMO,Thermo Fisher Scientific Inc,Healthcare,150,155.29,243.75
+NVDA,NVIDIA Corp,Technology,54,384.47,645.37
+TSLA2,Tesla Inc,Technology,12,374.36,583.76
+AVGO2,Broadcom Inc,Technology,33,199.61,339.46
+DE,Deere & Co,Industrials,64,114.27,159.86
+CRM,Salesforce Inc,Technology,82,189.92,344.76
+FE,FirstEnergy Corp,Utilities,173,75.04,81.24
+GM3,General Motors Co,Consumer Discretionary,91,393.3,594.63
+CVS,CVS Health Corp,Healthcare,40,329.06,422.29
+PH2,Parker-Hannifin Corp,Industrials,141,203.66,245.08
+QCOM4,Qualcomm Inc,Technology,13,366.23,530.83
+OVV,Ovintiv Inc,Energy,18,170.51,251.15
+FDX,FedEx Corp,Industrials,24,156.6,251.67
+BXP,Boston Properties Inc,Real Estate,8,60.72,83.16
+CME2,CME Group Inc,Financials,32,293.96,427.52
+LRCX2,Lam Research Corp,Technology,17,381.71,615.02
+PG2,Procter & Gamble Co,Consumer Staples,32,122.53,175.31
+UNH2,UnitedHealth Group Inc,Healthcare,15,194.9,247.94
+COP,ConocoPhillips,Energy,24,150.79,239.37
+EOG,EOG Resources Inc,Energy,28,187.43,265.0
+COST2,Costco Wholesale Corp,Consumer Staples,13,67.67,85.96
+NVDA2,NVIDIA Corp,Technology,7,392.64,640.66
+TSLA3,Tesla Inc,Technology,33,148.44,244.13
+DOW,Dow Inc,Materials,45,90.92,107.21
+LLY,Eli Lilly and Co,Healthcare,47,273.59,369.24
+BMY3,Bristol-Myers Squibb Co,Healthcare,19,277.0,439.61
+TTWO2,Take-Two Interactive Software Inc,Communication Services,10,192.76,265.53
+ATVI,Activision Blizzard Inc,Communication Services,17,109.07,152.82
+SCHW2,Charles Schwab Corp,Financials,12,160.44,276.22
+AMD2,AMD Inc,Technology,31,131.73,199.84
+QCOM5,Qualcomm Inc,Technology,22,448.62,732.44
+CF,CF Industries Holdings Inc,Materials,67,156.08,232.43
+MMC3,Marsh & McLennan Cos,Financials,52,198.47,310.66
+AMAT,Applied Materials Inc,Technology,21,308.11,468.17
+BSX,Boston Scientific Corp,Healthcare,10,106.53,144.26
+LRCX3,Lam Research Corp,Technology,7,353.07,603.37

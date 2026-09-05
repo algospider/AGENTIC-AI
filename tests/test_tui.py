@@ -21,10 +21,16 @@ async def _run():
     findings = analyst_agent(df)
     risks = risk_agent(df, findings)
     from tools import simulate_rebalance, stress_test, sip_for_goal
+
+    def fake_load(path):
+        d2 = pd.read_csv(CSV)
+        f2 = analyst_agent(d2)
+        return d2, f2, risk_agent(d2, f2), "stub advice"
+
     app = PortfolioApp(df, findings, risks, "advice text", "sample.csv",
                        simulate_rebalance,
                        lambda f, q, h, r: f"STUB-ANSWER to: {q}",
-                       stress_test, sip_for_goal)
+                       stress_test, sip_for_goal, fake_load)
     async with app.run_test(size=(110, 45)) as pilot:
         # Mouse through every read-only view
         for m in ("#m-1", "#m-2", "#m-3", "#m-4"):
@@ -83,8 +89,30 @@ async def _run():
         await pilot.click("#exp-go")
         await pilot.pause(3)
         out = str(app.query_one("#exp-result", Static).render())
-        assert out.startswith("Saved to"), out
-        print("PASS export click:", out)
+        assert out.startswith("Saved:"), out
+        print("PASS export click (md+json)")
+
+        # Datasets view: click second dataset -> reloads via stub
+        await pilot.click("#m-8")
+        await pilot.pause()
+        items = app.query("#ds-list ListItem")
+        assert len(items) >= 2, "dataset list missing"
+        await pilot.click("#ds-1")
+        await pilot.pause(2)
+        assert app.advice == "stub advice" and app.history == [], "reload failed"
+        print("PASS dataset click-load")
+
+        # Compare A vs B via mouse
+        await pilot.click("#m-8")
+        await pilot.pause()
+        from textual.widgets import Select
+        app.query_one("#cmp-go", Button).scroll_visible()
+        await pilot.pause()
+        await pilot.click("#cmp-go")
+        await pilot.pause(2)
+        cmp_out = str(app.query_one("#cmp-result", Static).render())
+        assert "wins" in cmp_out or "Tie" in cmp_out, cmp_out
+        print("PASS compare click")
 
 
 if __name__ == "__main__":

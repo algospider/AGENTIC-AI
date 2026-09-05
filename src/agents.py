@@ -2,7 +2,8 @@
 Agents: Portfolio Health Advisor
 
 Sequential handoff:
-    Analyst (facts) -> Risk (flags+tax) -> Advisor (LLM advice) -> Q&A (chat)
+    Analyst (facts) -> Risk (danger) -> Planner (way out) -> Tax (cost of acting)
+        -> Sentinel (tripwires) -> Scout (brief) -> Advisor (LLM) -> Q&A (chat)
 """
 
 import json
@@ -11,11 +12,13 @@ from typing import Any
 try:
     from tools import (calculate_returns, calculate_allocation, assess_risk,
                        estimate_tax, health_score, rebalance_plan, project_growth,
-                       stress_test, sip_for_goal, tax_loss_harvest)
+                       stress_test, sip_for_goal, tax_loss_harvest,
+                       risk_metrics, build_alerts, build_insights)
 except ImportError:  # allow `python src/main.py` and `python -m src.main`
     from src.tools import (calculate_returns, calculate_allocation, assess_risk,
                            estimate_tax, health_score, rebalance_plan, project_growth,
-                           stress_test, sip_for_goal, tax_loss_harvest)
+                           stress_test, sip_for_goal, tax_loss_harvest,
+                           risk_metrics, build_alerts, build_insights)
 
 try:
     from llm import complete
@@ -43,15 +46,30 @@ def risk_agent(portfolio, findings: dict[str, Any] | None = None) -> dict[str, A
     returns = findings.get("returns") or calculate_returns(portfolio)
     allocation = findings.get("allocation") or calculate_allocation(portfolio)
     risk = assess_risk(portfolio, returns, allocation)
-    tax = estimate_tax(returns)
+    taxed = tax_agent(portfolio, {"returns": returns})
+    tax, harvest = taxed["tax"], taxed["harvest"]
     health = health_score(returns, allocation, risk)
     plan = rebalance_plan(portfolio)
     projection = project_growth(returns["totals"]["total_value"])
     stress = stress_test(portfolio)  # default: top sector -20%
-    harvest = tax_loss_harvest(returns)
     goal = sip_for_goal(100000, 5)  # default example; UI recomputes live
+    metrics = risk_metrics(returns)
+    alerts = build_alerts(returns, allocation, risk)
+    insights = build_insights(returns, allocation, risk, harvest, plan)
     return {"risk": risk, "tax": tax, "health": health, "plan": plan,
-            "projection": projection, "stress": stress, "harvest": harvest, "goal": goal}
+            "projection": projection, "stress": stress, "harvest": harvest,
+            "goal": goal, "metrics": metrics, "alerts": alerts, "insights": insights}
+
+
+def tax_agent(portfolio, findings: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Tax Calculator Agent: what acting costs, and how losers can pay for winners.
+
+    Returns {"tax": estimate_tax(...), "harvest": tax_loss_harvest(...)}.
+    Simplified flat-rate math on unrealized gains — educational, not tax advice.
+    """
+    findings = findings or {}
+    returns = findings.get("returns") or calculate_returns(portfolio)
+    return {"tax": estimate_tax(returns), "harvest": tax_loss_harvest(returns)}
 
 
 def _fallback_advice(findings: dict[str, Any], risk_data: dict[str, Any] | None = None) -> str:
@@ -91,12 +109,23 @@ def _fallback_advice(findings: dict[str, Any], risk_data: dict[str, Any] | None 
     return "\n".join(f"• {l}" for l in lines)
 
 
+def _alert_counts(alerts: list[dict]) -> dict:
+    counts = {"critical": 0, "warn": 0, "ok": 0}
+    for a in alerts or []:
+        if a.get("severity") in counts:
+            counts[a["severity"]] += 1
+    return counts
+
+
 def advisor_agent(findings: dict[str, Any], risk_data: dict[str, Any] | None = None) -> str:
     """Agent 2: reasons over findings (+risk/tax/health/plan), calls Zen LLM, falls back to rules."""
     risk_data = risk_data or {}
     slim = {"risk": risk_data.get("risk"), "tax": risk_data.get("tax"),
             "health": risk_data.get("health"), "plan": risk_data.get("plan"),
-            "stress": risk_data.get("stress"), "harvest": risk_data.get("harvest")}
+            "stress": risk_data.get("stress"), "harvest": risk_data.get("harvest"),
+            "metrics": risk_data.get("metrics"),
+            "insights": risk_data.get("insights", [])[:3],
+            "alert_counts": _alert_counts(risk_data.get("alerts", []))}
     prompt = (
         "You are a portfolio advisor for a retail investor.\n"
         f"ANALYST FINDINGS (JSON):\n{json.dumps(findings, indent=2)[:3200]}\n"
@@ -119,7 +148,8 @@ def qa_agent(findings: dict[str, Any], question: str, history: list[dict] | None
     rd = risk_data or {}
     extras = {"projection": rd.get("projection"), "stress": rd.get("stress"),
               "harvest": rd.get("harvest"),
-              "goal_example": rd.get("goal"),
+              "goal_example": rd.get("goal"), "metrics": rd.get("metrics"),
+              "alerts": rd.get("alerts"),
               "sip_help": "For a custom SIP goal use: monthly = FV*r/((1+r)^n-1), r=annual_rate/12, n=years*12. Compute it."}
     prompt = (
         "Answer the user's portfolio question using ONLY these findings.\n"
@@ -170,6 +200,21 @@ def qa_agent(findings: dict[str, Any], question: str, history: list[dict] | None
         bits = "; ".join(f"sell {p['sell_loser']} (loss {p['book_loss']}) saves ~{p['tax_saved']}"
                          for p in hv["pairs"])
         return f"Tax-loss harvest: {bits}. Total saved ~{hv['total_tax_saved']}. Simplified."
+    if "insight" in q or "brief" in q or "headline" in q or "tl;dr" in q or "tldr" in q:
+        items = (risk_data or {}).get("insights", [])
+        if not items:
+            return "No insights right now."
+        return "Today's brief: " + " | ".join(f"{i['title']} — {i['body']}" for i in items[:3])
+    if "alert" in q or "warning" in q or "watch" in q:
+        alerts = (risk_data or {}).get("alerts", [])
+        if not alerts:
+            return "No alerts right now."
+        return "Alerts: " + " | ".join(f"[{a['severity'].upper()}] {a['text']}" for a in alerts[:5])
+    if "sharpe" in q or "volatil" in q or "win rate" in q or "metric" in q:
+        m = (risk_data or {}).get("metrics", {})
+        return (f"Volatility {m.get('volatility_pct')}% | Sharpe proxy {m.get('sharpe_proxy')} | "
+                f"win rate {m.get('win_rate_pct')}% | best {m.get('best_contributor')} / "
+                f"worst {m.get('worst_contributor')}. Single-period estimates.")
     if "risk" in q or "concentrat" in q or "diversif" in q:
         return (f"Your biggest risk is concentration: {a['top_sector']} is {a['top_sector_pct']}% "
                 f"(top holding {a['top_holding']} at {a['top_holding_pct']}%). HHI is {a['hhi']}. "

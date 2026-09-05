@@ -4,6 +4,10 @@
 **Hackathon:** ACM Student Chapter Hackathon
 **Duration:** 8 hours (offline)
 
+> **Website UI (new):** the whole project also runs as a Next.js app —
+> `./run-web.sh` → http://localhost:3000 (dashboard, charts, chat, compare).
+> See `web/README.md`. The Python CLI/TUI below still works unchanged.
+
 ---
 
 ## Problem Statement
@@ -96,6 +100,23 @@ python3 src/main.py --menu                # classic scrolling menu instead
 python3 src/main.py --portfolio my.csv    # your own CSV (same columns)
 python3 src/main.py --auto                # no menu: dashboard + report file
 python3 src/main.py --non-interactive     # plain text output for scripts
+```
+
+Demo datasets in `sample_data/` (prices simulated):
+
+| File | Holdings | Story |
+|------|----------|-------|
+| `sample_portfolio.csv` | 10 | Concentrated tech (default) |
+| `large_portfolio_200.csv` | 200 | Even fictional spread |
+| `portfolio_50_42.csv` | 50 | Real tickers, correlated returns |
+| `portfolio_100_diversified_123.csv` | 100 | Diversified |
+| `portfolio_200_diversified_42.csv` | 200 | Diversified |
+| `portfolio_500_diversified_42.csv` | 500 | Large-scale demo |
+
+```bash
+python3 sample_data/generate_portfolio.py --n 200 --seed 42
+python3 sample_data/generate_portfolio_enhanced.py --n 100 --seed 7 --scenario losers
+# scenarios: concentrated | diversified | losers | high_dividend
 ```
 
 You do **not** need a paid API key. Free tiers (Groq, Gemini, OpenAI trial

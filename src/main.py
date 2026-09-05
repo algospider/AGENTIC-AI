@@ -14,48 +14,34 @@ More options:
 """
 
 import argparse
-import hashlib
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-import pandas as pd
+import pandas as pd  # noqa: F401  (kept for `python -c` style reuse)
 
-from agents import analyst_agent, risk_agent, advisor_agent, qa_agent
+from agents import qa_agent
 from tools import simulate_rebalance, stress_test, sip_for_goal
 
 try:
-    from tui import (console, show_dashboard, show_plan, show_projection,
-                     main_menu, what_if_flow, qa_flow)
+    from pipeline import (REPO_ROOT, find_portfolio, run_pipeline,
+                          list_datasets, compare_portfolios)
 except ImportError:
-    from src.tui import (console, show_dashboard, show_plan, show_projection,
-                         main_menu, what_if_flow, qa_flow)
+    from src.pipeline import (REPO_ROOT, find_portfolio, run_pipeline,
+                              list_datasets, compare_portfolios)
 
 try:
-    from report import build_report
+    from tui import (console, show_dashboard, show_plan, show_projection,
+                     main_menu, what_if_flow, qa_flow, datasets_flow, show_compare)
 except ImportError:
-    from src.report import build_report
+    from src.tui import (console, show_dashboard, show_plan, show_projection,
+                         main_menu, what_if_flow, qa_flow, datasets_flow, show_compare)
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-SAMPLE = REPO_ROOT / "sample_data" / "sample_portfolio.csv"
-
-
-def find_portfolio(given: str | None) -> Path:
-    """Beginner-proof CSV lookup: explicit path, else the bundled sample."""
-    if given:
-        p = Path(given)
-        candidates = [p, REPO_ROOT / p, Path.cwd() / p]
-        for c in candidates:
-            if c.is_file():
-                return c
-        raise FileNotFoundError(
-            f"Could not find '{given}'. Tip: put your CSV in sample_data/ "
-            f"with columns: ticker,company_name,sector,quantity,buy_price,current_price")
-    if SAMPLE.is_file():
-        return SAMPLE
-    raise FileNotFoundError("Sample portfolio not found. Expected at sample_data/sample_portfolio.csv")
-
+try:
+    from report import build_report, build_json
+except ImportError:
+    from src.report import build_report, build_json
 
 def setup_hint() -> None:
     """Friendly first-run guidance. Never a hard error: the app works without a key."""
@@ -64,43 +50,10 @@ def setup_hint() -> None:
                       "For AI advice: cp .env.example .env and add your key.[/yellow]")
 
 
-def run_pipeline(portfolio_path: Path, use_cache: bool = True):
-    try:
-        raw = portfolio_path.read_bytes()
-        portfolio = pd.read_csv(portfolio_path)
-    except Exception as e:
-        raise SystemExit(f"Could not read '{portfolio_path}': {e}\n"
-                         "Tip: it must be a CSV with columns "
-                         "ticker,company_name,sector,quantity,buy_price,current_price")
-    try:
-        findings = analyst_agent(portfolio)
-        risks = risk_agent(portfolio, findings)
-    except ValueError as e:
-        raise SystemExit(f"Problem with the portfolio data: {e}")
-    advice = cached_advice(raw, findings, risks, use_cache)
-    return portfolio, findings, risks, advice
-
-
-def cached_advice(raw: bytes, findings, risks, use_cache: bool = True) -> str:
-    """Cache LLM advice by portfolio content + model so repeat runs start instantly."""
-    import os
-    key = hashlib.sha256(raw + os.getenv("MODEL_ID", "").encode()).hexdigest()[:16]
-    cache = REPO_ROOT / "outputs" / ".advice_cache" / f"{key}.txt"
-    if use_cache and cache.is_file():
-        return cache.read_text()
-    console.print("[dim]Generating AI advice (free model, ~30s first time; cached after)...[/dim]")
-    advice = advisor_agent(findings, risks)
-    try:
-        cache.parent.mkdir(parents=True, exist_ok=True)
-        cache.write_text(advice)
-    except OSError:
-        pass
-    return advice
-
-
 def export_report(portfolio_path: Path, findings, risks, advice) -> None:
-    path = build_report(str(portfolio_path), findings, risks, advice)
-    console.print(f"[green]Report saved to {path}[/green]")
+    md = build_report(str(portfolio_path), findings, risks, advice)
+    js = build_json(str(portfolio_path), findings, risks, advice)
+    console.print(f"[green]Reports saved:\n  {md}\n  {js}[/green]")
 
 
 def main():
@@ -134,6 +87,12 @@ def main():
         print(risks["health"])
         print("--- RISK ---")
         print(risks["risk"])
+        print("--- METRICS ---")
+        print(risks["metrics"])
+        print("--- ALERTS ---")
+        print(risks["alerts"])
+        print("--- INSIGHTS ---")
+        print(risks["insights"])
         print("--- TAX ---")
         print(risks["tax"])
         print("--- PLAN ---")
@@ -152,6 +111,7 @@ def main():
         if args.auto or args.export:
             print("--- REPORT ---")
             print(build_report(str(portfolio_path), findings, risks, advice))
+            print(build_json(str(portfolio_path), findings, risks, advice))
         return
 
     if args.export:
@@ -178,7 +138,8 @@ def main():
                 from src.app_tui import launch as launch_fullscreen
             launch_fullscreen(portfolio, findings, risks, advice,
                               str(portfolio_path), simulate_rebalance, qa_agent,
-                              stress_test, sip_for_goal)
+                              stress_test, sip_for_goal,
+                              lambda p: run_pipeline(Path(p)))
             return
         except ImportError:
             console.print("[yellow]Textual not installed — using classic menu. "
@@ -187,21 +148,33 @@ def main():
             console.print(f"[yellow]Full-screen TUI failed ({e}) — using classic menu.[/yellow]")
 
     console.print(f"[dim]Loaded {len(tickers)} holdings from {portfolio_path.name}[/dim]")
+    t = findings["returns"]["totals"]
+    console.print(f"[dim]Worth {t['total_value']} ({t['return_pct']:+}% overall) · "
+                  f"health {risks['health']['score']}/100 ({risks['health']['grade']}) · "
+                  f"risk {risks['risk']['risk_level']}[/dim]")
     show_dashboard(findings, risks, advice)
+    state = {"path": str(portfolio_path), "portfolio": portfolio, "findings": findings,
+             "risks": risks, "advice": advice, "tickers": tickers}
     while True:
         choice = main_menu()
         if choice == "1":
-            show_dashboard(findings, risks, advice)
+            show_dashboard(state["findings"], state["risks"], state["advice"])
         elif choice == "2":
-            show_plan(risks["plan"])
+            show_plan(state["risks"]["plan"])
         elif choice == "3":
-            show_projection(risks["projection"], risks.get("goal"))
+            show_projection(state["risks"]["projection"], state["risks"].get("goal"))
         elif choice == "4":
-            what_if_flow(portfolio, simulate_rebalance, tickers, stress_test)
+            what_if_flow(state["portfolio"], simulate_rebalance, state["tickers"], stress_test)
         elif choice == "5":
-            qa_flow(findings, risks, qa_agent)
+            qa_flow(state["findings"], state["risks"], qa_agent)
         elif choice == "6":
-            export_report(portfolio_path, findings, risks, advice)
+            export_report(Path(state["path"]), state["findings"], state["risks"], state["advice"])
+        elif choice == "7":
+            fresh = datasets_flow(state["path"], list_datasets(),
+                                  lambda p: run_pipeline(Path(p)), compare_portfolios)
+            if fresh:
+                state.update(fresh)
+                show_dashboard(state["findings"], state["risks"], state["advice"])
         else:
             console.print("[dim]Goodbye! Your data never left this machine except LLM prompts.[/dim]")
             break

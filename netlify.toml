@@ -1,0 +1,9 @@
+# Netlify deploy config for the Next.js site in web/.
+# Netlify auto-detects Next.js and handles SSR API routes — no plugin entry needed.
+[build]
+  base = "web"
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"

@@ -1,5 +1,6 @@
-"""Export a beginner-friendly Markdown report of the full analysis."""
+"""Export beginner-friendly Markdown (+JSON) reports of the full analysis."""
 
+import json
 from datetime import datetime
 from pathlib import Path
 
@@ -13,6 +14,8 @@ def build_report(portfolio_path: str, findings: dict, risks: dict, advice: str) 
     proj = risks.get("projection", {})
     stress, harvest = risks.get("stress", {}), risks.get("harvest", {})
     goal = risks.get("goal", {})
+    metrics, alerts = risks.get("metrics", {}), risks.get("alerts", [])
+    insights = risks.get("insights", [])
 
     lines = [
         "# Portfolio Health Report",
@@ -23,6 +26,10 @@ def build_report(portfolio_path: str, findings: dict, risks: dict, advice: str) 
         "",
         "## Summary",
         findings.get("analysis", ""),
+        "",
+        "## Today's Brief",
+        *([f"- [{i['tone'].upper()}] {i['title']} — {i['body']}" for i in insights]
+          if insights else ["- No insights."]),
         "",
         "## Returns",
         f"- Total value: {t['total_value']} (cost {t['total_cost']})",
@@ -37,6 +44,13 @@ def build_report(portfolio_path: str, findings: dict, risks: dict, advice: str) 
         "## Risk",
         f"- Level: {risk.get('risk_level')} ({risk.get('risk_score')}/100)",
         *[f"- {f}" for f in risk.get("flags", [])],
+        f"- Volatility {metrics.get('volatility_pct')}% · Sharpe proxy {metrics.get('sharpe_proxy')} · "
+        f"win rate {metrics.get('win_rate_pct')}% (best {metrics.get('best_contributor')}, "
+        f"worst {metrics.get('worst_contributor')})",
+        "",
+        "## Alerts",
+        *([f"- [{a['severity'].upper()}] {a['text']}" for a in alerts]
+          if alerts else ["- No alerts."]),
         "",
         "## Tax (simplified estimate, not advice)",
         f"- Est. tax ~{tax.get('total_est_tax')} on gains {tax.get('total_taxable_gain')} "
@@ -71,4 +85,20 @@ def build_report(portfolio_path: str, findings: dict, risks: dict, advice: str) 
     out_dir.mkdir(exist_ok=True)
     path = out_dir / f"report_{datetime.now():%Y%m%d_%H%M%S}.md"
     path.write_text("\n".join(lines))
+    return str(path)
+
+
+def build_json(portfolio_path: str, findings: dict, risks: dict, advice: str) -> str:
+    """Write the full machine-readable analysis to outputs/ and return its path."""
+    out_dir = Path(__file__).resolve().parent.parent / "outputs"
+    out_dir.mkdir(exist_ok=True)
+    payload = {"generated_at": datetime.now().isoformat(timespec="seconds"),
+               "portfolio": str(portfolio_path),
+               "analysis": findings.get("analysis", ""),
+               "returns": findings.get("returns", {}),
+               "allocation": findings.get("allocation", {}),
+               "risks": risks, "advice": advice,
+               "disclaimer": "Not financial advice. Educational demo on static sample data."}
+    path = out_dir / f"report_{datetime.now():%Y%m%d_%H%M%S}.json"
+    path.write_text(json.dumps(payload, indent=2))
     return str(path)

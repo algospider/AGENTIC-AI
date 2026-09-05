@@ -1,0 +1,178 @@
+@import "tailwindcss";
+
+/* ————— Light: white canvas (default) ————— */
+:root, [data-theme="light"] {
+  color-scheme: light;
+  --bg: #ffffff;
+  --panel: #ffffff;
+  --panel-solid: #ffffff;
+  --well: #f8f9fa;
+  --field: #ffffff;
+  --track: #e5e7eb;
+  --edge: #e5e7eb;
+  --text: #111111;
+  --muted: #374151;
+  --faint: #6b7280;
+  --accent: #111111;
+  --accent-ink: #ffffff;
+  --signal: #2563eb;
+  --up: #059669;
+  --warn: #b45309;
+  --down: #dc2626;
+  --vio: #7c3aed;
+  --mid: #71770f;
+  --scrim: rgba(17, 17, 17, 0.45);
+  --texture: none;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* ————— Dark: quiet charcoal closing tone ————— */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #101010;
+  --panel: #1a1a1a;
+  --panel-solid: #1a1a1a;
+  --well: #222222;
+  --field: #1a1a1a;
+  --track: #2a2a2a;
+  --edge: #2e2e2e;
+  --text: #f5f5f5;
+  --muted: #a1a1aa;
+  --faint: #737373;
+  --accent: #ededed;
+  --accent-ink: #111111;
+  --signal: #60a5fa;
+  --up: #10b981;
+  --warn: #f59e0b;
+  --down: #ef4444;
+  --vio: #8b5cf6;
+  --mid: #a8a029;
+  --scrim: rgba(0, 0, 0, 0.6);
+  --texture: none;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--text);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 250ms ease-out, color 250ms ease-out;
+}
+
+::selection { background: var(--accent); color: var(--accent-ink); }
+
+/* Subtle paper texture (near-invisible 1px grid). Panels stay flat. */
+.app-texture {
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--edge) 55%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--edge) 55%, transparent) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+/* ————— Semantic surfaces & type (theme-aware, no raw colors in components) ————— */
+.bg-ink { background-color: var(--bg); }
+.bg-ink-soft { background-color: color-mix(in srgb, var(--bg) 90%, transparent); }
+.bg-panel { background-color: var(--panel); }
+.bg-well { background-color: var(--well); }
+.bg-field { background-color: var(--field); }
+.bg-track { background-color: var(--track); }
+.bg-mid { background-color: var(--mid); }
+.text-paper { color: var(--text); }
+.text-ink { color: var(--accent-ink); }
+.text-fog { color: var(--muted); }
+.text-mist { color: var(--faint); }
+.text-on-accent { color: var(--accent-ink); }
+.border-edge { border-color: var(--edge); }
+
+.text-signal { color: var(--signal); }
+.bg-signal { background-color: var(--accent); }
+.bg-signal-soft { background-color: color-mix(in srgb, var(--signal) 12%, transparent); }
+.border-signal { border-color: color-mix(in srgb, var(--signal) 50%, transparent); }
+
+.text-up { color: var(--up); }
+.bg-up { background-color: var(--up); }
+.bg-up-soft { background-color: color-mix(in srgb, var(--up) 12%, transparent); }
+.border-up { border-color: color-mix(in srgb, var(--up) 40%, transparent); }
+
+.text-down { color: var(--down); }
+.bg-down { background-color: var(--down); }
+.bg-down-soft { background-color: color-mix(in srgb, var(--down) 10%, transparent); }
+.border-down { border-color: color-mix(in srgb, var(--down) 40%, transparent); }
+
+.text-warn { color: var(--warn); }
+.bg-warn { background-color: var(--warn); }
+.bg-warn-soft { background-color: color-mix(in srgb, var(--warn) 14%, transparent); }
+.border-warn { border-color: color-mix(in srgb, var(--warn) 45%, transparent); }
+
+.text-vio { color: var(--vio); }
+
+.accent-signal { accent-color: var(--signal); }
+.accent-warn { accent-color: var(--warn); }
+.placeholder\:text-mist::placeholder { color: var(--faint); }
+.hover\:bg-well:hover { background-color: var(--well); }
+.hover\:bg-track:hover { background-color: var(--track); }
+.hover\:bg-signal:hover { background-color: color-mix(in srgb, var(--accent) 88%, var(--text)); }
+.focus\:border-signal:focus { border-color: var(--signal); }
+
+/* Printed-figure numerals for hero numbers. */
+.num-serif { font-family: Georgia, "Times New Roman", serif; letter-spacing: -0.01em; }
+
+/* Restrained elevation: hairline first, shadow last. */
+.shadow-card { box-shadow: var(--shadow-card); }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.anim-rise { animation: rise 160ms ease-out; }
+
+@keyframes shimmer {
+  from { background-position: -400px 0; }
+  to { background-position: 400px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--track) 25%, var(--edge) 50%, var(--track) 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.2s linear infinite;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.anim-toast { animation: toast-in 200ms ease-out; }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.live-dot { animation: pulse-dot 1.6s ease-in-out infinite; }
+
+@keyframes grow-bar {
+  from { width: 0; }
+}
+.anim-bar { animation: grow-bar 600ms ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-rise, .anim-toast, .anim-bar { animation: none; }
+  .skeleton { animation: none; }
+  .live-dot { animation: none; }
+  body { transition: none; }
+}
+
+:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--track); border-radius: 8px; border: 2px solid var(--bg); }
+::-webkit-scrollbar-thumb:hover { background: var(--edge); }

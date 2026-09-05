@@ -1,4 +1,5 @@
 pandas>=2.2.2
+numpy>=1.26            # realistic dataset generator (sample_data/)
 
 python-dotenv>=1.0.1
 
@@ -6,6 +7,10 @@ python-dotenv>=1.0.1
 openai>=1.51.0
 rich>=13.9.2
 textual>=8.0
+
+# Presentation builder only (scripts/build_presentation.py)
+matplotlib>=3.8
+python-pptx>=1.0
 
 # Optional: agent framework, if you want one (not required)
 # langchain==0.3.0

@@ -8,6 +8,7 @@ __pycache__/
 
 # Environment / secrets
 .env
+web/.env*.local
 
 # OS
 .DS_Store
@@ -15,3 +16,10 @@ Thumbs.db
 
 # Local artifacts
 outputs/
+
+# Next.js
+web/node_modules/
+web/.next/
+web/out/
+web/*.tsbuildinfo
+web/next-env.d.ts

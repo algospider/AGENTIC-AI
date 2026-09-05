@@ -1,148 +1,90 @@
-# Portfolio Health Advisor, Starter Repo
+# Portfolio Health Advisor
 
-**Theme:** Agentic AI
-**Hackathon:** ACM Student Chapter Hackathon
-**Duration:** 8 hours (offline)
+### *Your money, finally explained in plain English.*
 
-> **Website UI (new):** the whole project also runs as a Next.js app —
-> `./run-web.sh` → http://localhost:3000 (dashboard, charts, chat, compare).
-> See `web/README.md`. The Python CLI/TUI below still works unchanged.
+**🌐 Live demo → [portfoliohealthadvisor.netlify.app](https://portfoliohealthadvisor.netlify.app/)**
 
 ---
 
-## Problem Statement
+Most of us own a handful of stocks across different companies — and have no
+real idea how we're actually doing. Are we really making money? Is everything
+secretly riding on one sector? What should we even do about it?
 
-Retail investors often have a portfolio spread across several
-stocks/funds but no easy way to understand it holistically how much
-they've actually gained, how concentrated their risk is, and what they
-should consider doing about it. You're going to automate a simplified
-version of that reasoning process using a two-agent pipeline.
+**Portfolio Health Advisor answers those three questions for you.**
+Upload a portfolio (or pick a sample), and a team of AI specialists reads every
+holding, measures your gains to the last cent, spots where your risk is hiding,
+and tells you — in simple, honest language — what to consider doing next.
 
-### Your Task
-
-Build a **two-agent pipeline**:
-
-**Agent 1 Analyst Agent**
-- Reads the provided portfolio data (`sample_data/sample_portfolio.csv`)
-- Calls two tools:
-  - **Return Calculator** — current value & gain/loss per holding and
-    overall
-  - **Allocation Breakdown** — % concentration by sector/asset class
-- Outputs structured findings (facts only, no advice yet)
-
-**Agent 2 — Advisor Agent**
-- Takes Agent 1's structured findings as input
-- Reasons over them (no new tools needed) and produces a short,
-  plain-English summary with 1–2 actionable suggestions
-
-This is a **sequential handoff**: Agent 1's output → Agent 2's input.
-
-### Core Requirements (must-have)
-
-1. Load portfolio data from `sample_data/sample_portfolio.csv`.
-2. Analyst Agent computes findings using both tools.
-3. Advisor Agent converts findings into a readable recommendation.
-4. Present both the findings and the final advice through a simple
-   interface (CLI, notebook, or web UI your choice).
-
-### Creative Extension Space (open-ended, graded separately)
-
-- Tax-impact estimator tool (simple capital gains estimate)
-- Finance news/sentiment tool feeding into the Advisor Agent's reasoning
-- "What-if" rebalance simulation
-- A third agent (e.g. a Risk Agent) extending the pipeline
-- Multi-turn Q&A on top of the final advice (e.g. "why is my risk high?")
-
-We want to see what *you* think makes portfolio advice actually useful.
-Surprise us.
-
-### Constraints
-
-- No training/fine-tuning models from scratch, use an LLM API (free-tier)
-  or a local model for the agent reasoning steps.
-- Tools should be plain Python functions operating on the static sample
-  data no real brokerage/market API integration required.
-- Must run/demo on your own laptop (no paid infra dependency).
-- Final submission = last commit pushed to your repo, submitted via the
-  Google Form before the deadline.
+No jargon. No 40-page reports. Just clarity.
 
 ---
 
-## Setup
+## What it feels like to use
 
-Easiest (one command, works with or without an API key):
+**📊 A health score for your money.**
+One number, 0–100, with a grade. Underneath it, a plain breakdown of exactly
+what's helping and what's hurting — like a report card you can actually act on.
 
-```bash
-./run.sh            # interactive menu + dashboard (uses the sample portfolio)
-./run.sh --auto     # one-shot: prints everything + saves a report to outputs/
-```
+**🔍 Risk, named out loud.**
+"Technology is 54% of your money." "One stock alone is 20%." "Three holdings
+are quietly losing." Every warning comes with a threshold, so you always know
+*why* something is flagged — and the moment it stops being true.
 
-Manual setup:
+**✂️ A fix-it plan, down to the share.**
+One click builds a rebalancing plan: exactly what to trim, how many shares,
+where the freed money should go, and what tax each move would roughly cost.
+It even pairs your losers with winners so losses can offset gains.
 
-```bash
-git clone <your-team-repo-url>
-cd p2
+**🔮 A glimpse of tomorrow.**
+See your money compound at 5, 10, 15% — then flip it around: tell it your goal
+("₹1,00,000 in 5 years") and it tells you the monthly SIP to get there.
+Crash-test any sector ("what if tech fell 20%?") before the market does it
+for you.
 
-python -m venv venv
-source venv/bin/activate      # on Windows: venv\Scripts\activate
+**💬 Ask anything, in your own words.**
+*"Why is my risk high?" · "How do I rebalance?" · "SIP for 50000 in 3 years?"*
+A chat advisor answers from *your* numbers — never generic tips.
 
-pip install -r requirements.txt
-
-cp .env.example .env
-# then edit .env and add your free-tier key
-```
-
-Then run:
-
-```bash
-python3 src/main.py                       # full-screen TUI, mouse + keyboard (default)
-python3 src/main.py --menu                # classic scrolling menu instead
-python3 src/main.py --portfolio my.csv    # your own CSV (same columns)
-python3 src/main.py --auto                # no menu: dashboard + report file
-python3 src/main.py --non-interactive     # plain text output for scripts
-```
-
-Demo datasets in `sample_data/` (prices simulated):
-
-| File | Holdings | Story |
-|------|----------|-------|
-| `sample_portfolio.csv` | 10 | Concentrated tech (default) |
-| `large_portfolio_200.csv` | 200 | Even fictional spread |
-| `portfolio_50_42.csv` | 50 | Real tickers, correlated returns |
-| `portfolio_100_diversified_123.csv` | 100 | Diversified |
-| `portfolio_200_diversified_42.csv` | 200 | Diversified |
-| `portfolio_500_diversified_42.csv` | 500 | Large-scale demo |
-
-```bash
-python3 sample_data/generate_portfolio.py --n 200 --seed 42
-python3 sample_data/generate_portfolio_enhanced.py --n 100 --seed 7 --scenario losers
-# scenarios: concentrated | diversified | losers | high_dividend
-```
-
-You do **not** need a paid API key. Free tiers (Groq, Gemini, OpenAI trial
-credits, or a local model via Ollama/HF) are all acceptable — pick
-whatever's easiest for your team to set up quickly.
+**📁 Your data, your way.**
+Start from a sample, upload a broker statement (PDF, Excel, CSV — an Extractor
+Agent reads it for you), type holdings in by hand, or flip on **live market
+prices**. Save analyses to your personal library. Compare any two portfolios
+side by side.
 
 ---
 
-## Submission
+## Under the hood (the 30-second version)
 
-1. Make sure your final code is committed and pushed.
-2. Copy your **final commit hash** (`git log -1 --format="%H"`).
-3. Submit it via the Google Form shared by the organizers, along with your
-   team name/ID.
-4. Judging happens at 3 checkpoints during the event.
+Seven specialist agents work as a relay team — one measures, one scores danger,
+one plans the way out, one prices the tax, one sets tripwires, one writes your
+morning brief, and one explains it all in plain English. Every number is
+computed with exact, testable math (audited to the cent across all datasets);
+the AI only ever *narrates* — it never invents figures. If the AI is ever
+unreachable, a built-in rule engine takes over instantly, so the app never
+goes speechless.
 
 ---
 
-## Evaluation
+## Try it yourself
 
-Full judging rubric:
-
-| Criterion | Weight |
+| Way in | How |
 |---|---|
-| Core Functionality | 40% |
-| Code Quality & Repo Hygiene | 15% |
-| UI/UX | 15% |
-| Creativity / Extra Features | 20% |
-| Presentation & Demo Clarity | 10% |
+| 🌐 Website (easiest) | Open **[portfoliohealthadvisor.netlify.app](https://portfoliohealthadvisor.netlify.app/)** — no install, no signup needed to explore |
+| 💻 Terminal UI | `./run.sh` — full-screen dashboard with mouse + keyboard |
+| 📓 One-shot report | `python3 src/main.py --auto` — prints everything, saves Markdown + JSON |
+
+Prefer your own data? Any CSV with
+`ticker, company_name, sector, quantity, buy_price, current_price` works —
+or generate a realistic 500-stock demo set with one command (see `USER_MANUAL.md`).
+
+---
+
+## Docs for the curious
+
+- **`PROJECT_MANUAL.md`** — every agent, every formula, the full pipeline, and a presenting guide
+- **`USER_MANUAL.md`** — setup, all run modes, troubleshooting
+- **`design.md`** — the visual system behind the website
+- **`presentation/`** — the slide deck
+
+*Built for the ACM Student Chapter Hackathon — Agentic AI theme.
+Educational demo on simulated data. Not financial advice.*

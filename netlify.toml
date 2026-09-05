@@ -8,3 +8,8 @@
 
 [build.environment]
   NODE_VERSION = "22"
+
+# Pin the Next.js Runtime explicitly: guarantees the OpenNext adapter runs
+# (SSR pages + API routes become serverless functions) instead of a static deploy.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

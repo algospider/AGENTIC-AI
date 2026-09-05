@@ -5,7 +5,11 @@ import {
   type Findings, type Plan, type Projection, type Risks,
 } from "@/lib/portfolio";
 import { Badge, Card, Field, btnGhost, btnPrimary, inputCls, money, signed } from "./ui";
-import { DownloadIcon, InfoIcon, PlusIcon, TrashIcon, XIcon } from "./icons";
+import { DownloadIcon, InfoIcon, PlusIcon, TrashIcon, UserIcon, XIcon } from "./icons";
+import {
+  createUserWithEmailAndPassword, firebaseAuth, friendlyAuthError,
+  googleProvider, signInWithEmailAndPassword, signInWithPopup,
+} from "@/lib/firebase";
 
 type Rec = Record<string, string>;
 
@@ -362,8 +366,7 @@ export function AlertsList({ alerts }: { alerts: Risks["alerts"] }) {
 
 export function ChatView({ onAsk, thinking }: {
   onAsk: (q: string) => void; thinking: boolean;
-}) {
-  const [draft, setDraft] = useState("");
+}) {  const [draft, setDraft] = useState("");
   const send = () => { if (draft.trim() && !thinking) { onAsk(draft.trim()); setDraft(""); } };
   const ideas = ["Why is my risk high?", "What is my health score?", "How to rebalance?",
     "Stress test?", "Harvest losses?", "SIP for 100000 in 5 years?"];
@@ -383,5 +386,112 @@ export function ChatView({ onAsk, thinking }: {
         </button>
       </div>
     </Card>
+  );
+}
+
+export function AuthModal({ onClose }: {
+  onClose: () => void;
+}) {
+  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const submit = async () => {
+    setError(null);
+    if (!email.trim() || !password) { setError("Email and password are required."); return; }
+    setBusy(true);
+    try {
+      const auth = firebaseAuth();
+      if (mode === "login") await signInWithEmailAndPassword(auth, email.trim(), password);
+      else await createUserWithEmailAndPassword(auth, email.trim(), password);
+      onClose(); // onAuthStateChanged in the page picks up the session
+    } catch (e: unknown) {
+      const code = typeof e === "object" && e !== null && "code" in e ? String((e as { code: unknown }).code) : "";
+      setError(friendlyAuthError(code));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const google = async () => {
+    setError(null);
+    setBusy(true);
+    try {
+      await signInWithPopup(firebaseAuth(), googleProvider);
+      onClose();
+    } catch (e: unknown) {
+      const code = typeof e === "object" && e !== null && "code" in e ? String((e as { code: unknown }).code) : "";
+      if (code !== "auth/popup-closed-by-user") setError(friendlyAuthError(code));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "var(--scrim)" }} onClick={onClose} role="dialog" aria-modal="true" aria-label="Sign in">
+      <div className="w-full max-w-sm rounded-xl border border-edge bg-panel p-5 shadow-card"
+        onClick={(e) => e.stopPropagation()}>
+        <div className="mb-1 flex items-center justify-between">
+          <h3 className="flex items-center gap-2 text-lg font-bold text-paper">
+            <UserIcon /> {mode === "login" ? "Welcome back" : "Create account"}
+          </h3>
+          <button onClick={onClose} aria-label="Close" className="rounded-md p-1.5 text-mist hover:bg-well">
+            <XIcon />
+          </button>
+        </div>
+        <p className="mb-4 text-sm text-fog">
+          {mode === "login"
+            ? "Sign in to open your saved-reports library."
+            : "One Firebase-secured account keeps every analysis you save."}
+        </p>
+        <button className={`${btnGhost} w-full`} disabled={busy} onClick={google}>
+          <span className="inline-flex items-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="#4285F4" d="M23.5 12.3c0-.9-.1-1.5-.3-2.3H12v4.5h6.5c-.1 1.1-.8 2.7-2.4 3.8l-.1.1 3.5 2.7.2.1c2.2-2 3.8-5 3.8-8.9Z" />
+              <path fill="#34A853" d="M12 24c3.2 0 5.9-1.1 7.9-2.9l-3.8-2.9c-1 .7-2.4 1.2-4.1 1.2-3.1 0-5.8-2.1-6.8-5l-.1.1-3.6 2.8v.1C3.5 21.3 7.5 24 12 24Z" />
+              <path fill="#FBBC05" d="M5.2 14.4c-.2-.7-.4-1.5-.4-2.4s.1-1.7.4-2.4l-.1-.1-3.6-2.8v-.1C.5 8.5 0 10.2 0 12s.5 3.5 1.5 5l3.7-2.6Z" />
+              <path fill="#EA4335" d="M12 4.7c1.8 0 3 .8 3.7 1.4l3.3-3.2C17.9 1.1 15.2 0 12 0 7.5 0 3.5 2.7 1.5 6.6l3.7 2.9c1-2.9 3.6-4.8 6.8-4.8Z" />
+            </svg>
+            Continue with Google
+          </span>
+        </button>
+        <div className="my-4 flex items-center gap-3 text-xs text-mist">
+          <span className="h-px flex-1 bg-edge" /> or with email <span className="h-px flex-1 bg-edge" />
+        </div>
+        <div className="mb-4 grid grid-cols-2 gap-1 rounded-lg bg-well p-1">
+          {(["login", "signup"] as const).map((m) => (
+            <button key={m} onClick={() => { setMode(m); setError(null); }}
+              className={`rounded-md px-3 py-1.5 text-sm font-semibold capitalize ${
+                mode === m ? "bg-panel text-paper shadow-card" : "text-mist"}`}>
+              {m === "login" ? "Sign in" : "Sign up"}
+            </button>
+          ))}
+        </div>
+        <div className="space-y-3">
+          <Field label="Email">
+            <input className={inputCls} value={email} onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com" inputMode="email" autoComplete="email"
+              onKeyDown={(e) => { if (e.key === "Enter") submit(); }} />
+          </Field>
+          <Field label={mode === "signup" ? "Password (6+ characters)" : "Password"}>
+            <input className={inputCls} type="password" value={password}
+              onChange={(e) => setPassword(e.target.value)} placeholder="••••••••"
+              autoComplete={mode === "signup" ? "new-password" : "current-password"}
+              onKeyDown={(e) => { if (e.key === "Enter") submit(); }} />
+          </Field>
+        </div>
+        {error && (
+          <p className="mt-3 flex items-start gap-1.5 rounded-lg border border-down bg-down-soft p-3 text-sm text-down">
+            <span className="mt-0.5 shrink-0"><InfoIcon /></span>{error}
+          </p>
+        )}
+        <button className={`${btnPrimary} mt-4 w-full`} disabled={busy} onClick={submit}>
+          {busy ? "One moment…" : mode === "login" ? "Sign in" : "Create account"}
+        </button>
+      </div>
+    </div>
   );
 }

@@ -90,3 +90,12 @@ export function ScaleIcon() {
 export function TrendUpIcon() {
   return (<Base><path d="M22 7l-8.5 8.5-5-5L2 17" /><path d="M16 7h6v6" /></Base>);
 }
+export function UserIcon() {
+  return (<Base><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></Base>);
+}
+export function LogoutIcon() {
+  return (<Base><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" /></Base>);
+}
+export function BookmarkIcon() {
+  return (<Base><path d="M19 21l-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2Z" /></Base>);
+}

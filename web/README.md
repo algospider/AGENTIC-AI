@@ -57,11 +57,31 @@ The repo ships a `netlify.toml`, so deployment is configuration-free:
 | `app/api/advice/route.ts` | Zen LLM advice + shared file cache with the CLI (`outputs/.advice_cache`) |
 | `app/api/qa/route.ts` | Zen LLM Q&A with offline fallback |
 | `app/api/quotes/route.ts` | Live prices via Yahoo Finance (no key; unknown tickers keep CSV prices) |
+| `app/api/auth/route.ts` | Email+password signup/login/logout (scrypt hash, signed cookie sessions) |
+| `app/api/library/route.ts` | Personal saved-reports library (list / save / open / delete) |
+| `lib/auth.ts` | File-store auth core (`web/data/users.json`, git-ignored) |
 | `public/datasets/` | All 6 sample CSVs served to the browser |
 
 Tabs: **Dashboard** (stats, health, pie, P&L bars, alerts, advice) ·
-**Holdings** (searchable table) · **Rebalance** (cap slider + harvest) ·
+**Holdings** (searchable) · **Rebalance** (cap slider + harvest) ·
 **Projection** (scenarios + SIP planner) · **Lab** (trim / targets / stress) ·
 **Q&A** (chat with suggestion chips) · **Datasets** (switch, upload, A/B compare).
 
 All analysis except the two LLM calls runs instantly in the browser.
+
+## Accounts & personal library (Firebase)
+
+Header → **Sign in**: email + password or **Continue with Google**, powered by
+Firebase Auth (`lib/firebase.ts` — project `portfolio-health-advisor`).
+Signed-in users get a **Library** tab: save any analysis, reopen it instantly
+with zero AI calls, delete anytime. Saved reports live per-user in the browser
+(`localStorage`) — this is deliberate: serverless filesystems (Netlify/Vercel)
+are ephemeral, so server file storage would silently lose data in production.
+
+Console checklist (Firebase Console → Authentication):
+- **Sign-in method**: enable *Email/Password* and *Google*.
+- **Settings → Authorized domains**: add `localhost` (dev) and your
+  `*.netlify.app` domain (prod), or sign-in fails with `auth/unauthorized-domain`.
+- The browser `apiKey` in `lib/firebase.ts` is public by design; restrict it
+  under Google Cloud → Credentials → API restrictions if you want.
+- Optional overrides without code edits: `NEXT_PUBLIC_FIREBASE_*` env vars.

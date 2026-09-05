@@ -1,7 +1,8 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AllocationPie, PnlBars } from "@/components/charts";
-import { ChatView, HoldingsTable, LabView, PlanView, ProjectionView } from "@/components/views";
+import { ChatView, HoldingsTable, LabView, PlanView, ProjectionView, AuthModal } from "@/components/views";
+import { BookmarkIcon, LogoutIcon, UserIcon } from "@/components/icons";
 import {
   Badge, Card, HealthBar, LiveBadge, Skeleton, Stat, ThemeToggle, Timeline, Toast, ToastStack,
   btnGhost, btnPrimary, inputCls, money, signed, type Stage,
@@ -9,6 +10,12 @@ import {
 import { DownloadIcon, LogoMark, RefreshIcon, ArrowRightIcon } from "@/components/icons";
 import { buildMarkdown, download, recordsToCSV } from "@/lib/report";
 import { orchestrate } from "@/lib/agents";
+import {
+  firebaseAuth, onAuthStateChanged, signOut as fbSignOut,
+} from "@/lib/firebase";
+import {
+  deleteReport, listReports, saveReport, type SavedReport,
+} from "@/lib/library";
 import {
   analystBundle, compareBundles, parseCSV,
   type Findings, type Risks,
@@ -23,7 +30,7 @@ const DATASETS = [
   "portfolio_500_diversified_42.csv",
 ];
 
-const TABS = ["Dashboard", "Holdings", "Rebalance", "Projection", "Lab", "Q&A", "Datasets"] as const;
+const TABS = ["Dashboard", "Holdings", "Rebalance", "Projection", "Lab", "Q&A", "Datasets", "Library"] as const;
 type Tab = (typeof TABS)[number];
 interface ChatMsg { role: "user" | "assistant"; content: string }
 type Rec = Record<string, string>;
@@ -49,6 +56,9 @@ export default function Home() {
   const [cmpA, setCmpA] = useState("sample_portfolio.csv");
   const [cmpB, setCmpB] = useState("portfolio_500_diversified_42.csv");
   const [cmpResult, setCmpResult] = useState<ReturnType<typeof compareBundles> | null>(null);
+  const [fbUser, setFbUser] = useState<{ email: string; uid: string } | null>(null);
+  const [showAuth, setShowAuth] = useState(false);
+  const [library, setLibrary] = useState<SavedReport[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const toast = useCallback((text: string, tone: Toast["tone"] = "cyan") => {
@@ -116,6 +126,64 @@ export default function Home() {
   }, [applyDataset]);
 
   useEffect(() => { loadDataset("sample_portfolio.csv"); }, [loadDataset]);
+
+  const refreshLibrary = useCallback((uid: string) => {
+    setLibrary(listReports(uid));
+  }, []);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(firebaseAuth(), (u) => {
+      if (u?.uid) {
+        setFbUser({ email: u.email ?? "Account", uid: u.uid });
+        setLibrary(listReports(u.uid));
+      } else {
+        setFbUser(null);
+        setLibrary([]);
+      }
+    });
+    return unsub;
+  }, []);
+
+  const signOut = async () => {
+    try { await fbSignOut(firebaseAuth()); } catch { /* already out */ }
+    setFbUser(null); setLibrary([]);
+    toast("Signed out. Your saved reports wait for you.", "cyan");
+  };
+
+  const saveCurrent = async () => {
+    if (!bundle) return;
+    if (!fbUser) { setShowAuth(true); return; }
+    saveReport(fbUser.uid, fileName, bundle.findings, bundle.risks, advice);
+    toast("Saved to your library.", "green");
+    refreshLibrary(fbUser.uid);
+  };
+
+  const loadSaved = async (id: string) => {
+    if (!fbUser) return;
+    const item = listReports(fbUser.uid).find((x) => x.id === id);
+    if (!item) { toast("Could not open that report.", "red"); return; }
+    const holdings = item.findings.returns.holdings as {
+      ticker: string; company_name: string; sector: string;
+      quantity: number; buy_price: number; current_price: number }[];
+    const recs: Rec[] = holdings.map((h) => ({
+      ticker: h.ticker, company_name: h.company_name, sector: h.sector,
+      quantity: String(h.quantity), buy_price: String(h.buy_price), current_price: String(h.current_price),
+    }));
+    const o = orchestrate(recs);
+    setBaseRecords(recs); setRecords(recs);
+    setBundle({ findings: item.findings, risks: item.risks });
+    setTimeline(o.timeline);
+    setAdvice(item.advice); setAdviceMeta("from your library");
+    setFileName(item.name); setChat([]); setLive(null);
+    setTab("Dashboard");
+    toast(`Opened “${item.name}” — no AI call needed.`, "green");
+  };
+
+  const deleteSaved = async (id: string) => {
+    if (!fbUser) return;
+    if (deleteReport(fbUser.uid, id)) { toast("Deleted.", "cyan"); refreshLibrary(fbUser.uid); }
+    else toast("Delete failed.", "red");
+  };
 
   const goLive = async () => {
     if (!baseRecords && !records) return;
@@ -243,6 +311,7 @@ export default function Home() {
   return (
     <div className="app-texture flex min-h-screen flex-col bg-ink text-paper">
       <ToastStack toasts={toasts} />
+      {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
       <header className="sticky top-0 z-10 border-b border-edge bg-ink/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3">
           <div className="mr-2">
@@ -266,8 +335,25 @@ export default function Home() {
                 </span>
               </button>}
           <LiveBadge live={live} />
+          {fbUser ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-edge bg-well px-2.5 py-1 text-xs font-semibold text-paper" title={fbUser.email}>
+              <UserIcon />{fbUser.email.length > 18 ? fbUser.email.slice(0, 18) + "…" : fbUser.email}
+            </span>
+          ) : null}
+          {fbUser ? (
+            <button className={btnGhost} onClick={signOut} title="Sign out">
+              <span className="inline-flex items-center gap-1.5"><LogoutIcon />Out</span>
+            </button>
+          ) : (
+            <button className={btnGhost} onClick={() => setShowAuth(true)}>
+              <span className="inline-flex items-center gap-1.5"><UserIcon />Sign in</span>
+            </button>
+          )}
           <div className="ml-auto flex gap-2">
             <ThemeToggle />
+            <button className={btnGhost} onClick={saveCurrent} title="Save this analysis to your library">
+              <span className="inline-flex items-center gap-1.5"><BookmarkIcon />Save</span>
+            </button>
             <button className={btnGhost} onClick={() => exportAll("md")}>
               <span className="inline-flex items-center gap-1.5"><DownloadIcon />.md</span>
             </button>
@@ -419,8 +505,7 @@ export default function Home() {
         )}
 
         {tab === "Datasets" && (
-          <div className="anim-rise grid gap-4 md:grid-cols-2">
-            <Card title="Switch portfolio" accent="#22d3ee">
+          <div className="anim-rise grid gap-4 md:grid-cols-2">            <Card title="Switch portfolio" accent="#22d3ee">
               <div className="space-y-2">
                 {DATASETS.map((d) => (
                   <button key={d} onClick={() => loadDataset(d)}
@@ -472,6 +557,47 @@ export default function Home() {
                 </div>
               )}
             </Card>
+          </div>
+        )}
+
+        {tab === "Library" && (
+          <div className="anim-rise">
+            {!fbUser ? (
+              <Card title="Your library lives here" accent="#22d3ee">
+                <p className="text-sm text-fog">
+                  Sign in to save any analysis and reopen it later — no AI calls, no waiting.
+                  One account, hashed passwords, signed-cookie sessions.
+                </p>
+                <button className={`${btnPrimary} mt-3`} onClick={() => setShowAuth(true)}>
+                  <span className="inline-flex items-center gap-1.5"><UserIcon />Sign in / Sign up</span>
+                </button>
+              </Card>
+            ) : (
+              <Card title={`Saved reports — ${library.length}`} accent="#22d3ee" wide>
+                <button className={`${btnGhost} mb-3`} onClick={saveCurrent}>
+                  <span className="inline-flex items-center gap-1.5"><BookmarkIcon />Save current analysis</span>
+                </button>
+                {library.length === 0 && (
+                  <p className="text-sm text-fog">Nothing saved yet. Analyze anything, then hit Save.</p>
+                )}
+                <div className="grid gap-3 md:grid-cols-2">
+                  {library.map((item) => (
+                    <div key={item.id} className="rounded-xl border border-edge bg-well p-4">
+                      <div className="font-semibold text-paper">{item.name}</div>
+                      <div className="mt-1 text-xs text-fog">
+                        {item.holdings} holdings · {money(item.value)} ·
+                        health {item.health?.score ?? "?"}/100({item.health?.grade ?? "?"}) ·
+                        saved {new Date(item.savedAt).toLocaleString()}
+                      </div>
+                      <div className="mt-3 flex gap-2">
+                        <button className={btnPrimary} onClick={() => loadSaved(item.id)}>Open</button>
+                        <button className={btnGhost} onClick={() => deleteSaved(item.id)}>Delete</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
           </div>
         )}
       </main>

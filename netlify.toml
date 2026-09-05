@@ -1,10 +1,11 @@
 # Netlify deploy config for the Next.js site in web/.
-# IMPORTANT: do NOT set `publish` — Netlify's OpenNext adapter provisions its
-# own output (functions, cache, static assets). Setting publish=".next" serves
-# raw build files and causes "Page not found".
+# IMPORTANT: `publish` must be set (the dashboard keeps injecting the base
+# directory, which the adapter rejects). With the plugin active, ".next"
+# (relative to base) is correct — the adapter wires functions + routing itself.
 [build]
   base = "web"
   command = "npm run build"
+  publish = ".next"
 
 [build.environment]
   NODE_VERSION = "22"

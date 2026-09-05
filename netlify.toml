@@ -1,9 +1,10 @@
 # Netlify deploy config for the Next.js site in web/.
-# Netlify auto-detects Next.js and handles SSR API routes — no plugin entry needed.
+# IMPORTANT: do NOT set `publish` — Netlify's OpenNext adapter provisions its
+# own output (functions, cache, static assets). Setting publish=".next" serves
+# raw build files and causes "Page not found".
 [build]
   base = "web"
   command = "npm run build"
-  publish = ".next"
 
 [build.environment]
   NODE_VERSION = "22"

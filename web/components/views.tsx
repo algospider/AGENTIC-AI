@@ -5,7 +5,7 @@ import {
   type Findings, type Plan, type Projection, type Risks,
 } from "@/lib/portfolio";
 import { Badge, Card, Field, btnGhost, btnPrimary, inputCls, money, signed } from "./ui";
-import { DownloadIcon, InfoIcon, PlusIcon, TrashIcon, UserIcon, XIcon } from "./icons";
+import { DownloadIcon, InfoIcon, PencilIcon, PlusIcon, TrashIcon, UserIcon, XIcon } from "./icons";
 import {
   createUserWithEmailAndPassword, firebaseAuth, friendlyAuthError,
   googleProvider, signInWithEmailAndPassword, signInWithPopup,
@@ -13,12 +13,21 @@ import {
 
 type Rec = Record<string, string>;
 
-export function HoldingsTable({ findings, sectors, onAdd, onDelete, onDownload }: {
+function toRec(h: { ticker: string; company_name: string; sector: string;
+  quantity: number; buy_price: number; current_price: number }): Rec {
+  return { ticker: h.ticker, company_name: h.company_name, sector: h.sector,
+    quantity: String(h.quantity), buy_price: String(h.buy_price),
+    current_price: String(h.current_price) };
+}
+
+export function HoldingsTable({ findings, sectors, onAdd, onEdit, onDelete, onDownload }: {
   findings: Findings; sectors: string[];
-  onAdd: (h: Rec) => void; onDelete: (ticker: string) => void; onDownload: () => void;
+  onAdd: (h: Rec) => void; onEdit: (origTicker: string, h: Rec) => void;
+  onDelete: (ticker: string) => void; onDownload: () => void;
 }) {
   const [q, setQ] = useState("");
   const [showAdd, setShowAdd] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
   const rows = findings.returns.holdings.filter((h) =>
     !q || `${h.ticker} ${h.company_name} ${h.sector}`.toLowerCase().includes(q.toLowerCase()));
   return (
@@ -61,11 +70,18 @@ export function HoldingsTable({ findings, sectors, onAdd, onDelete, onDownload }
                   {signed(h.pnl_pct, "%")}
                 </td>
                 <td className="px-2 py-1.5 text-right">
-                  <button onClick={() => onDelete(h.ticker)} title={`Remove ${h.ticker}`}
-                    aria-label={`Remove ${h.ticker}`}
-                    className="rounded-md p-1.5 text-mist hover:bg-down-soft hover:text-down">
-                    <TrashIcon />
-                  </button>
+                  <span className="inline-flex gap-1">
+                    <button onClick={() => setEditing(h.ticker)} title={`Edit ${h.ticker}`}
+                      aria-label={`Edit ${h.ticker}`}
+                      className="rounded-md p-1.5 text-mist hover:bg-well hover:text-signal">
+                      <PencilIcon />
+                    </button>
+                    <button onClick={() => onDelete(h.ticker)} title={`Remove ${h.ticker}`}
+                      aria-label={`Remove ${h.ticker}`}
+                      className="rounded-md p-1.5 text-mist hover:bg-down-soft hover:text-down">
+                      <TrashIcon />
+                    </button>
+                  </span>
                 </td>
               </tr>
             ))}
@@ -76,20 +92,30 @@ export function HoldingsTable({ findings, sectors, onAdd, onDelete, onDownload }
         <HoldingModal sectors={sectors} onClose={() => setShowAdd(false)}
           onSave={(h) => { setShowAdd(false); onAdd(h); }} />
       )}
+      {editing && (
+        <HoldingModal sectors={sectors} title={`Edit ${editing}`}
+          initial={findings.returns.holdings.find((h) => h.ticker === editing)
+            ? toRec(findings.returns.holdings.find((h) => h.ticker === editing)!) : undefined}
+          onClose={() => setEditing(null)}
+          onSave={(h) => { const t = editing; setEditing(null); onEdit(t, h); }} />
+      )}
     </Card>
   );
 }
 
-export function HoldingModal({ sectors, onClose, onSave }: {
+export function HoldingModal({ sectors, onClose, onSave, initial, title }: {
   sectors: string[]; onClose: () => void; onSave: (h: Rec) => void;
+  initial?: Rec; title?: string;
 }) {
-  const [ticker, setTicker] = useState("");
-  const [company, setCompany] = useState("");
-  const [sector, setSector] = useState(sectors[0] ?? "");
-  const [customSector, setCustomSector] = useState("");
-  const [qty, setQty] = useState("");
-  const [buy, setBuy] = useState("");
-  const [now, setNow] = useState("");
+  const [ticker, setTicker] = useState(initial?.ticker ?? "");
+  const [company, setCompany] = useState(initial?.company_name ?? "");
+  const initialIsCustom = !!initial?.sector && !sectors.includes(initial.sector);
+  const [sector, setSector] = useState(
+    initialIsCustom ? "__custom__" : (initial?.sector ?? sectors[0] ?? ""));
+  const [customSector, setCustomSector] = useState(initialIsCustom ? initial.sector : "");
+  const [qty, setQty] = useState(initial?.quantity ?? "");
+  const [buy, setBuy] = useState(initial?.buy_price ?? "");
+  const [now, setNow] = useState(initial?.current_price ?? "");
   const [error, setError] = useState<string | null>(null);
 
   const save = () => {
@@ -112,7 +138,7 @@ export function HoldingModal({ sectors, onClose, onSave }: {
       <div className="w-full max-w-md rounded-xl border border-edge bg-panel p-5 shadow-card"
         onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-bold text-paper">Add holding</h3>
+          <h3 className="text-lg font-bold text-paper">{title ?? "Add holding"}</h3>
           <button onClick={onClose} aria-label="Close" className="rounded-md p-1.5 text-mist hover:bg-well">
             <XIcon />
           </button>
@@ -149,7 +175,7 @@ export function HoldingModal({ sectors, onClose, onSave }: {
         <div className="mt-4 flex justify-end gap-2">
           <button className={btnGhost} onClick={onClose}>Cancel</button>
           <button className={btnPrimary} onClick={save}>
-            <span className="inline-flex items-center gap-1.5"><PlusIcon />Add to portfolio</span>
+            <span className="inline-flex items-center gap-1.5"><PlusIcon />{initial ? "Save changes" : "Add to portfolio"}</span>
           </button>
         </div>
       </div>
@@ -491,6 +517,81 @@ export function AuthModal({ onClose }: {
         <button className={`${btnPrimary} mt-4 w-full`} disabled={busy} onClick={submit}>
           {busy ? "One moment…" : mode === "login" ? "Sign in" : "Create account"}
         </button>
+      </div>
+    </div>
+  );
+}
+
+export interface PreviewData {
+  filename: string; format: string;
+  rows: { ticker: string; company_name: string; sector: string;
+          quantity: string; buy_price: string; current_price: string }[];
+  warnings: string[];
+}
+
+export function ExtractPreview({ data, onMerge, onNew, onClose }: {
+  data: PreviewData;
+  onMerge: () => void; onNew: () => void; onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "var(--scrim)" }} onClick={onClose} role="dialog" aria-modal="true" aria-label="Review extracted holdings">
+      <div className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-xl border border-edge bg-panel p-5 shadow-card"
+        onClick={(e) => e.stopPropagation()}>
+        <div className="mb-1 flex items-center justify-between">
+          <h3 className="text-lg font-bold text-paper">
+            Extractor Agent found {data.rows.length} holding{data.rows.length === 1 ? "" : "s"}
+          </h3>
+          <button onClick={onClose} aria-label="Close" className="rounded-md p-1.5 text-mist hover:bg-well">
+            <XIcon />
+          </button>
+        </div>
+        <p className="mb-3 text-sm text-fog">
+          From <span className="font-mono">{data.filename}</span> ({data.format}).
+          Review everything — nothing enters your portfolio until you confirm.
+        </p>
+        {data.warnings.length > 0 && (
+          <ul className="mb-3 space-y-1 rounded-lg border border-warn bg-warn-soft p-3 text-sm text-warn">
+            {data.warnings.map((w, i) => <li key={i}>• {w}</li>)}
+          </ul>
+        )}
+        <div className="min-h-0 flex-1 overflow-auto">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 bg-panel">
+              <tr className="border-b border-edge text-left text-xs uppercase text-mist">
+                {["Ticker", "Company", "Sector", "Qty", "Buy", "Now"].map((h) => (
+                  <th key={h} className="px-2 py-2 font-medium">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {data.rows.map((r, i) => (
+                <tr key={`${r.ticker}-${i}`} className="border-b border-edge/60">
+                  <td className="px-2 py-1.5 font-mono font-bold text-signal">{r.ticker}</td>
+                  <td className="px-2 py-1.5 text-paper">{r.company_name}</td>
+                  <td className="px-2 py-1.5 text-fog">{r.sector}</td>
+                  <td className="px-2 py-1.5 text-right tabular-nums">{r.quantity}</td>
+                  <td className="px-2 py-1.5 text-right tabular-nums">{r.buy_price}</td>
+                  <td className="px-2 py-1.5 text-right tabular-nums">{r.current_price}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {data.rows.length === 0 && (
+            <p className="py-6 text-center text-sm text-fog">
+              Nothing usable in this file. A line like “RELIANCE Reliance Industries 50 2400 2985” works best.
+            </p>
+          )}
+        </div>
+        <div className="mt-4 flex flex-wrap justify-end gap-2">
+          <button className={btnGhost} onClick={onClose}>Discard</button>
+          <button className={btnGhost} disabled={!data.rows.length} onClick={onMerge}>
+            Add to current portfolio
+          </button>
+          <button className={btnPrimary} disabled={!data.rows.length} onClick={onNew}>
+            Start new portfolio from file
+          </button>
+        </div>
       </div>
     </div>
   );

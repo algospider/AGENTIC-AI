@@ -7,6 +7,7 @@ export interface SavedReport {
   id: string; name: string; savedAt: string;
   holdings: number; value: number; health?: { score: number; grade: string };
   findings: Findings; risks: Risks; advice: string;
+  records?: Record<string, string>[];
 }
 
 const keyFor = (uid: string) => `pha-library-${uid}`;
@@ -35,6 +36,7 @@ export function listReports(uid: string): SavedReport[] {
 
 export function saveReport(
   uid: string, name: string, findings: Findings, risks: Risks, advice: string,
+  records?: Record<string, string>[],
 ): SavedReport {
   const item: SavedReport = {
     id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`,
@@ -44,6 +46,7 @@ export function saveReport(
     value: findings.returns.totals.total_value,
     health: { score: risks.health.score, grade: risks.health.grade },
     findings, risks, advice: String(advice ?? "").slice(0, 20000),
+    ...(records ? { records } : {}),
   };
   const items = readAll(uid);
   writeAll(uid, [item, ...items]);

@@ -1,14 +1,15 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AllocationPie, PnlBars } from "@/components/charts";
-import { ChatView, HoldingsTable, LabView, PlanView, ProjectionView, AuthModal } from "@/components/views";
+import { ChatView, HoldingsTable, LabView, PlanView, ProjectionView, AuthModal, ExtractPreview, type PreviewData } from "@/components/views";
 import { BookmarkIcon, LogoutIcon, UserIcon } from "@/components/icons";
 import {
   Badge, Card, HealthBar, LiveBadge, Skeleton, Stat, ThemeToggle, Timeline, Toast, ToastStack,
   btnGhost, btnPrimary, inputCls, money, signed, type Stage,
 } from "@/components/ui";
-import { DownloadIcon, LogoMark, RefreshIcon, ArrowRightIcon } from "@/components/icons";
+import { DownloadIcon, LogoMark, RefreshIcon, ArrowRightIcon, UploadIcon, PlusIcon } from "@/components/icons";
 import { buildMarkdown, download, recordsToCSV } from "@/lib/report";
+import { mergeRows } from "@/lib/extract";
 import { orchestrate } from "@/lib/agents";
 import {
   firebaseAuth, onAuthStateChanged, signOut as fbSignOut,
@@ -151,9 +152,9 @@ export default function Home() {
   };
 
   const saveCurrent = async () => {
-    if (!bundle) return;
+    if (!bundle || !records) return;
     if (!fbUser) { setShowAuth(true); return; }
-    saveReport(fbUser.uid, fileName, bundle.findings, bundle.risks, advice);
+    saveReport(fbUser.uid, fileName, bundle.findings, bundle.risks, advice, records);
     toast("Saved to your library.", "green");
     refreshLibrary(fbUser.uid);
   };
@@ -162,10 +163,7 @@ export default function Home() {
     if (!fbUser) return;
     const item = listReports(fbUser.uid).find((x) => x.id === id);
     if (!item) { toast("Could not open that report.", "red"); return; }
-    const holdings = item.findings.returns.holdings as {
-      ticker: string; company_name: string; sector: string;
-      quantity: number; buy_price: number; current_price: number }[];
-    const recs: Rec[] = holdings.map((h) => ({
+    const recs: Rec[] = item.records ?? item.findings.returns.holdings.map((h) => ({
       ticker: h.ticker, company_name: h.company_name, sector: h.sector,
       quantity: String(h.quantity), buy_price: String(h.buy_price), current_price: String(h.current_price),
     }));
@@ -271,6 +269,65 @@ export default function Home() {
     toast(`Removed ${ticker} — analysis refreshed.`, "green");
   };
 
+  const editHolding = async (origTicker: string, h: Rec) => {
+    if (!records) return;
+    if (h.ticker !== origTicker && records.some((r) => r.ticker === h.ticker)) {
+      toast(`${h.ticker} is already here — pick another ticker.`, "red");
+      return;
+    }
+    const newRecs = records.map((r) => (r.ticker === origTicker ? h : r));
+    await applyDataset(fileName, newRecs, recordsToCSV(newRecs), live, newRecs);
+    toast(`Updated ${h.ticker} — analysis refreshed.`, "green");
+  };
+
+  const startBlank = async () => {
+    const recs: Rec[] = [{
+      ticker: "EXAMPLE", company_name: "Example Corp", sector: "Technology",
+      quantity: "10", buy_price: "100", current_price: "110",
+    }];
+    await applyDataset("my-portfolio.csv", recs, recordsToCSV(recs), null);
+    setTab("Holdings");
+    toast("Blank portfolio started — edit the example, add your holdings.", "green");
+  };
+
+  const [preview, setPreview] = useState<PreviewData | null>(null);
+  const [extracting, setExtracting] = useState(false);
+  const stmtRef = useRef<HTMLInputElement>(null);
+
+  const uploadStatement = async (f: File | undefined) => {
+    if (!f) return;
+    setExtracting(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", f);
+      const res = await fetch("/api/extract", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) { toast(data.error ?? "Extraction failed.", "red"); return; }
+      setPreview({ filename: data.filename, format: data.format, rows: data.rows, warnings: data.warnings ?? [] });
+    } catch {
+      toast("Upload failed — is the server running?", "red");
+    } finally {
+      setExtracting(false);
+    }
+  };
+
+  const applyExtracted = async (mode: "merge" | "new") => {
+    if (!preview) return;
+    const incoming = preview.rows.map((r) => ({ ...r }));
+    if (mode === "new" || !records) {
+      const name = preview.filename.replace(/\.[^.]+$/, "") + ".csv";
+      await applyDataset(name, incoming, recordsToCSV(incoming), null);
+      toast(`Started “${name}” with ${incoming.length} holdings.`, "green");
+    } else {
+      const { merged, added, skipped } = mergeRows(records, incoming);
+      await applyDataset(fileName, merged, recordsToCSV(merged), live, merged);
+      toast(`Added ${added} holding${added === 1 ? "" : "s"}` +
+        (skipped.length ? ` (${skipped.length} dupes skipped: ${skipped.slice(0, 3).join(", ")})` : "") + ".", added ? "green" : "cyan");
+    }
+    setPreview(null);
+    setTab("Holdings");
+  };
+
   const downloadCSV = () => {
     if (!records) return;
     download(fileName.replace(/\.csv$/i, "") + "-edited.csv", recordsToCSV(records), "text/csv");
@@ -311,6 +368,12 @@ export default function Home() {
   return (
     <div className="app-texture flex min-h-screen flex-col bg-ink text-paper">
       <ToastStack toasts={toasts} />
+      {preview && (
+        <ExtractPreview data={preview}
+          onMerge={() => applyExtracted("merge")}
+          onNew={() => applyExtracted("new")}
+          onClose={() => setPreview(null)} />
+      )}
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
       <header className="sticky top-0 z-10 border-b border-edge bg-ink/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3">
@@ -458,7 +521,7 @@ export default function Home() {
           <div className="anim-rise grid gap-4">
             <HoldingsTable findings={bundle.findings}
               sectors={Object.keys(bundle.findings.allocation.by_sector).sort()}
-              onAdd={addHolding} onDelete={deleteHolding} onDownload={downloadCSV} />
+              onAdd={addHolding} onEdit={editHolding} onDelete={deleteHolding} onDownload={downloadCSV} />
           </div>
         )}
 
@@ -505,7 +568,20 @@ export default function Home() {
         )}
 
         {tab === "Datasets" && (
-          <div className="anim-rise grid gap-4 md:grid-cols-2">            <Card title="Switch portfolio" accent="#22d3ee">
+          <div className="anim-rise grid gap-4 md:grid-cols-2">
+            <Card title="Switch portfolio" accent="#22d3ee">
+              <div className="mb-3 grid grid-cols-2 gap-2">
+                <button className={btnPrimary} disabled={extracting} onClick={() => stmtRef.current?.click()}>
+                  <span className="inline-flex items-center gap-1.5"><UploadIcon />
+                    {extracting ? "Reading file…" : "Upload statement"}</span>
+                </button>
+                <button className={btnGhost} onClick={startBlank}>
+                  <span className="inline-flex items-center gap-1.5"><PlusIcon />Blank portfolio</span>
+                </button>
+              </div>
+              <input ref={stmtRef} type="file" accept=".csv,.xlsx,.xls,.pdf,.txt,.md" className="hidden"
+                onChange={(e) => { uploadStatement(e.target.files?.[0]); e.target.value = ""; }} />
+              <p className="mb-2 text-xs text-mist">Broker PDF, Excel, CSV or text — the Extractor Agent pulls out holdings for your review.</p>
               <div className="space-y-2">
                 {DATASETS.map((d) => (
                   <button key={d} onClick={() => loadDataset(d)}
@@ -566,7 +642,7 @@ export default function Home() {
               <Card title="Your library lives here" accent="#22d3ee">
                 <p className="text-sm text-fog">
                   Sign in to save any analysis and reopen it later — no AI calls, no waiting.
-                  One account, hashed passwords, signed-cookie sessions.
+                  Secured by Firebase Auth, stored privately in your browser.
                 </p>
                 <button className={`${btnPrimary} mt-3`} onClick={() => setShowAuth(true)}>
                   <span className="inline-flex items-center gap-1.5"><UserIcon />Sign in / Sign up</span>

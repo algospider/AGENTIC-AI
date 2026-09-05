@@ -168,8 +168,9 @@ identical to Python), same agents, charts included:
 ```
 
 Tabs: Dashboard (stats, health bar, **agent orchestra timeline**, allocation pie, P&L bars, alerts, advice) ·
-Holdings (searchable, **add / remove holdings, download your edited CSV**) · Rebalance (cap slider + harvest) · Projection (SIP
+Holdings (searchable, **add / edit / delete**, download your edited CSV) · Rebalance (cap slider + harvest) · Projection (SIP
 planner) · Lab (trim / targets / stress-test) · Q&A chat · Datasets (switch,
+**upload a broker PDF / Excel / CSV for the Extractor Agent**, blank portfolio,
 upload your CSV, A/B compare). Export downloads `.md`/`.json` reports.
 API keys live in `web/.env.local`; without one the rule engine takes over.
 Only the Advice and Q&A calls hit the network — everything else computes

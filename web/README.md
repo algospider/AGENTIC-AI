@@ -57,15 +57,17 @@ The repo ships a `netlify.toml`, so deployment is configuration-free:
 | `app/api/advice/route.ts` | Zen LLM advice + shared file cache with the CLI (`outputs/.advice_cache`) |
 | `app/api/qa/route.ts` | Zen LLM Q&A with offline fallback |
 | `app/api/quotes/route.ts` | Live prices via Yahoo Finance (no key; unknown tickers keep CSV prices) |
-| `app/api/auth/route.ts` | Email+password signup/login/logout (scrypt hash, signed cookie sessions) |
-| `app/api/library/route.ts` | Personal saved-reports library (list / save / open / delete) |
-| `lib/auth.ts` | File-store auth core (`web/data/users.json`, git-ignored) |
+| `app/api/extract/route.ts` | **Extractor Agent**: PDF (unpdf) / Excel (xlsx) / CSV / text → validated holdings + warnings |
+| `lib/extract.ts` | Header-synonym mapping, statement-line heuristics, sector guessing, dup-safe merge |
+| `lib/firebase.ts` | Firebase Auth client (email/password + Google, friendly errors) |
+| `lib/library.ts` | Personal library in per-user localStorage (Netlify-safe, no server disk) |
 | `public/datasets/` | All 6 sample CSVs served to the browser |
 
 Tabs: **Dashboard** (stats, health, pie, P&L bars, alerts, advice) ·
-**Holdings** (searchable) · **Rebalance** (cap slider + harvest) ·
-**Projection** (scenarios + SIP planner) · **Lab** (trim / targets / stress) ·
-**Q&A** (chat with suggestion chips) · **Datasets** (switch, upload, A/B compare).
+**Holdings** (search, **add / edit / delete**, download CSV) ·
+**Rebalance** (cap slider + harvest) · **Projection** (scenarios + SIP planner) ·
+**Lab** (trim / targets / stress) · **Q&A** (chat with suggestion chips) ·
+**Datasets** (switch, **upload broker PDF/Excel/CSV**, blank portfolio, A/B compare).
 
 All analysis except the two LLM calls runs instantly in the browser.
 

@@ -154,6 +154,10 @@ Run the suite: `python3 tests/test_tools.py && python3 tests/test_agents.py && p
 `presentation/Portfolio_Health_Advisor.pptx` — slide deck for the demo
 (regenerate anytime with `python3 scripts/build_presentation.py`).
 
+> Presenting or judging? Read **`PROJECT_MANUAL.md`** — every agent, every
+> calculation with a worked example, the full data-flow diagram, and a
+> 30-second / 2-minute / 5-minute presenting guide with jury Q&A.
+
 ## 10. Website UI (Next.js)
 
 The entire project is ported to a website in `web/` — same math (verified

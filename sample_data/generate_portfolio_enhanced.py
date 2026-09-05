@@ -5,7 +5,6 @@ import csv
 import random
 import numpy as np
 from pathlib import Path
-from datetime import datetime, timedelta
 
 # Real-world sector weights (approximate S&P 500 sector weights)
 SECTOR_WEIGHTS = {
@@ -196,8 +195,8 @@ def generate_realistic_portfolio(n: int, seed: int = 42) -> list[dict]:
     
     # Assign sectors to holdings
     holdings_per_sector = {}
-    for sector in sectors:
-        holdings_per_sector[sector] = max(1, int(n * SECTOR_WEIGHTS[sector]))
+    for sector, w in zip(sectors, weights):
+        holdings_per_sector[sector] = max(1, int(n * w))
     
     # Adjust to exactly n holdings
     total_assigned = sum(holdings_per_sector.values())
@@ -254,8 +253,6 @@ def generate_realistic_portfolio(n: int, seed: int = 42) -> list[dict]:
         
         # Current price based on correlated return
         total_return = sector_returns[i]
-        years_held = rng.uniform(0.5, 5.0)
-        annual_return = (1 + total_return) ** (1/years_held) - 1
         current_price = round(buy_price * (1 + total_return), 2)
         
         # Quantity based on position size (log-normal distribution for realism)

@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from pptx import Presentation
 from pptx.dml.color import RGBColor
-from pptx.util import Emu, Inches, Pt
+from pptx.util import Inches, Pt
 
 from tools import (assess_risk, calculate_allocation, calculate_returns,
                    health_score, project_growth, rebalance_plan, stress_test,

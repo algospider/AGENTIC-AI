@@ -19,8 +19,6 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-import pandas as pd  # noqa: F401  (kept for `python -c` style reuse)
-
 from agents import qa_agent
 from tools import simulate_rebalance, stress_test, sip_for_goal
 
@@ -33,10 +31,10 @@ except ImportError:
 
 try:
     from tui import (console, show_dashboard, show_plan, show_projection,
-                     main_menu, what_if_flow, qa_flow, datasets_flow, show_compare)
+                     main_menu, what_if_flow, qa_flow, datasets_flow)
 except ImportError:
     from src.tui import (console, show_dashboard, show_plan, show_projection,
-                         main_menu, what_if_flow, qa_flow, datasets_flow, show_compare)
+                         main_menu, what_if_flow, qa_flow, datasets_flow)
 
 try:
     from report import build_report, build_json

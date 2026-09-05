@@ -164,7 +164,7 @@ def qa_agent(findings: dict[str, Any], question: str, history: list[dict] | None
         return text.strip()
     # Offline extractive fallback
     q = question.lower()
-    a, r = findings["allocation"], findings["returns"]
+    a = findings["allocation"]
     if "score" in q or "health" in q or "grade" in q:
         h = (risk_data or {}).get("health", {})
         return (f"Health score is {h.get('score', '?')}/100 (grade {h.get('grade', '?')}). "

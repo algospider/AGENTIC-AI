@@ -47,7 +47,7 @@ The repo ships a `netlify.toml`, so deployment is configuration-free:
 
 | Path | Purpose |
 |------|---------|
-| `app/page.tsx` | Whole app: header, dataset picker, live toggle, 7 tabs, exports |
+| `app/page.tsx` | Whole app: header, ＋New menu, live toggle, 6 tabs, exports |
 | `components/ui.tsx` | Cards, stats, health bar, badges, toasts, skeletons, timeline, live badge |
 | `components/charts.tsx` | Allocation pie + winners/losers bars (recharts) |
 | `components/views.tsx` | Holdings, rebalance, projection+SIP, lab, chat |
@@ -78,7 +78,8 @@ All analysis except the two LLM calls runs instantly in the browser.
 
 Header → **Sign in**: email + password or **Continue with Google**, powered by
 Firebase Auth (`lib/firebase.ts` — project `portfolio-health-advisor`).
-Signed-in users get a **Library** tab: save any analysis, reopen it instantly
+Signed-in users get persistent **My Data** (own portfolios) plus a saved-reports
+library: save any analysis, reopen it instantly
 with zero AI calls, delete anytime. Saved reports live per-user in the browser
 (`localStorage`) — this is deliberate: serverless filesystems (Netlify/Vercel)
 are ephemeral, so server file storage would silently lose data in production.

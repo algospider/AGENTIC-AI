@@ -23,3 +23,6 @@ web/.next/
 web/out/
 web/*.tsbuildinfo
 web/next-env.d.ts
+
+# Generated chart art (rebuilt by scripts/build_presentation.py)
+presentation/_*.png

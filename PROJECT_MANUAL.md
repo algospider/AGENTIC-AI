@@ -139,7 +139,7 @@ Same six specialists as **timed stages** with a live timeline UI
 | One-shot | `--auto` | Prints everything + saves Markdown **and** JSON reports |
 | Judge script | `--non-interactive` | Plain sections incl. METRICS/ALERTS/INSIGHTS |
 | Single question | `--question "..."` | "Why is my risk high?" |
-| Website | `./run-web.sh` → localhost:3000 | 7 tabs, charts, live prices, holding editor, A/B compare |
+| Website | `./run-web.sh` → localhost:3000 | 6 tabs, charts, live prices, holding editor, A/B compare |
 | Deck | `presentation/Portfolio_Health_Advisor.pptx` | Pre-built slides (rebuild: `scripts/build_presentation.py`) |
 
 ---

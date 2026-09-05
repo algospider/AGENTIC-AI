@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 import pandas as pd
 from agents import analyst_agent, risk_agent
 from app_tui import PortfolioApp
-from textual.widgets import Button, DataTable, Input, Static
+from textual.widgets import Button, Input, Static
 
 CSV = str(Path(__file__).resolve().parent.parent / "sample_data" / "sample_portfolio.csv")
 
@@ -105,7 +105,6 @@ async def _run():
         # Compare A vs B via mouse
         await pilot.click("#m-8")
         await pilot.pause()
-        from textual.widgets import Select
         app.query_one("#cmp-go", Button).scroll_visible()
         await pilot.pause()
         await pilot.click("#cmp-go")

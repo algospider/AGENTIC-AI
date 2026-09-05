@@ -141,7 +141,6 @@ def calculate_allocation(portfolio: pd.DataFrame) -> dict:
 
 def assess_risk(portfolio: pd.DataFrame, returns: dict | None = None, allocation: dict | None = None) -> dict:
     """Rule-based risk flags feeding the Risk Agent / Advisor. No LLM."""
-    import pandas as pd  # local to keep import light
     df = _validate(portfolio)
     returns = returns or calculate_returns(df)
     allocation = allocation or calculate_allocation(df)

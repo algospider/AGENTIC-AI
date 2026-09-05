@@ -33,7 +33,7 @@ function gridFromText(text: string): ExtractResult | null {
 }
 
 async function pdfToText(buf: Buffer): Promise<string> {
-  // unpdf: serverless-safe PDF text (no worker needed, unlike raw pdfjs).
+  // unpdf: serverless-safe PDF text extraction, no worker process needed.
   const { extractText } = await import("unpdf");
   const { text } = await extractText(new Uint8Array(buf), { mergePages: false });
   return (Array.isArray(text) ? text.join("\n") : String(text ?? "")).slice(0, 60000);
